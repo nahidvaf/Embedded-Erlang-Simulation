@@ -1,0 +1,12 @@
+{application, erlang_serial,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { erlang_serial_app, []}},
+  {env, []}
+ ]}.

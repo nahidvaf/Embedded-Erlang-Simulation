@@ -13,7 +13,8 @@
 %% ------------------------------------------------------------------
 
 -export([init/1, handle_event/3,
-         handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
+         handle_sync_event/4, handle_info/3, terminate/3, code_change/4,
+        disconnected/2, connected/2, alive_check/1]).
 
 
 %% ------------------------------------------------------------------
@@ -27,16 +28,18 @@ start_port(PortName, PortSettings) ->
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-
+% Todo: {ok, SerialClientNode} was just SerialClientNode before
+% This caused an error that was tricky to see at first, should we
+% case if we get a good return and else crash or is that defensive porgrammng?
 init(Args) ->
-    SerialClientNode = application:gen_env(embedded_sim, serial_client_node),
+    {ok, SerialClientNode} = application:get_env(embedded_sim, serial_client_node),
     {ok, disconnected, [{serial_client_node, SerialClientNode}|Args]}.
 
-disconnected({{?MODULE, SerialClientNode},{command,Message}}, State) ->
+disconnected({{?MODULE, _SerialClientNode},{command,Message}}, State) ->
     send_msg(Message, State),
     {next_state, connected, State}.
 
-connected({{?MODULE, SerialClientNode},{command,Message}}, State) ->
+connected({{?MODULE, _SerialClientNode},{command,Message}}, State) ->
     send_msg(Message, State),
     {next_state, connected, State}.
 
@@ -46,21 +49,17 @@ handle_event(_Event, StateName, State) ->
 handle_sync_event(_Event, _From, StateName, State) ->
   {reply, ok, StateName, State}.
 
-handle_info({Pid, {command, Message}}, connected, State) ->
+handle_info({_Pid, {command, Message}}, connected, State) ->
     SerialClientNode = proplists:get_value(serial_client_node, State),
-    io:format("sending command ~w to ~w ~n",
-              [Message, SerialClientNode]),
     gen_fsm:send_event({?MODULE, SerialClientNode},
                        {{?MODULE, node()},{command, Message}}),
     {next_state, connected, State};
 
 
-handle_info({Pid, {command, Message}}, disconnected, State) ->
+handle_info({_Pid, {command, Message}}, disconnected, State) ->
     SerialClientNode = proplists:get_value(serial_client_node, State),
     case alive_check(SerialClientNode) of
         true ->
-            io:format("sending command ~w to ~w ~n",
-                      [Message, SerialClientNode]),
             gen_fsm:send_event({?MODULE, SerialClientNode},
                                {{?MODULE, node()},{command, Message}}),
             {next_state, connected, State};
@@ -81,10 +80,14 @@ alive_check(SerialClientNode) ->
     case rpc:call(SerialClientNode, erlang, whereis, [?MODULE]) of
         undefined ->
             false;
+        {badrpc, _Reason} ->
+            false;
         _Other ->
             true
     end.
 
+% Todo: Add check for parent_pid?
+% if its not available we crash and get weird error?
 send_msg(Message, State) ->
     ParentPid = proplists:get_value(parent_pid, State),
     ParentPid ! {whereis(?MODULE), {data, Message}}.

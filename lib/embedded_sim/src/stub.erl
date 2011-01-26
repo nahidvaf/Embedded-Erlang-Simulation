@@ -5,7 +5,10 @@
 start_port(Mod, PortName, PortSettings) ->
     case os:getenv("EMBEDDED_ENV") of
         "sim"  ->
-            gen_fsm:start_link(Mod, [{PortName, PortSettings}], [{parent_pid, self()}]);
+            Args = [{parent_pid, self()},
+                    {portname, PortName},
+                    {port_settings, PortSettings}],
+            gen_fsm:start_link({local, Mod}, Mod, Args, []);
         "hard" ->
             open_port(PortName, PortSettings);
         false ->

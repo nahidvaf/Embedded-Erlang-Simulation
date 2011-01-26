@@ -1,8 +1,8 @@
-%    -*- Erlang -*- 
+%    -*- Erlang -*-
 %    File:	serial.erl  (~jb/serialport/serial.erl)
 %    Author:	Johan Bevemyr
 %    Created:	Tue Oct 22 14:07:24 1996
-%    Purpose:   
+%    Purpose:
 
 -module(serial).
 -author('jb@erix.ericsson.se').
@@ -34,7 +34,10 @@ process_options(Pid,[Opt|Opts]) ->
 
 init(Pid) ->
     process_flag(trap_exit,true),
-    Port = open_port({spawn,priv_dir()++"/bin/serial -erlang"},[binary,{packet,2}]),
+    Port = stub_serial:start_port({spawn,priv_dir()++"/bin/serial -erlang"},
+                       [binary,{packet,2}]),
+    %Port = open_port({spawn,priv_dir()++"/bin/serial -erlang"},
+    %                 [binary,{packet,2}]),
     loop(Pid,Port).
 
 loop(Pid,Port) ->
@@ -86,8 +89,8 @@ loop(Pid,Port) ->
 	    io:format("Received unknown message ~w~n",[OtherError]),
 	    serial:loop(Pid,Port)
     end.
-	
+
 send_serial(Port,Message) ->
     Port ! {self(),{command,Message}}.
 
-    
+

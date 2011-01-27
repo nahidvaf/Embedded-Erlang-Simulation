@@ -34,7 +34,7 @@ process_options(Pid,[Opt|Opts]) ->
 
 init(Pid) ->
     process_flag(trap_exit,true),
-    Port = stub_serial:start_port({spawn,priv_dir()++"/bin/serial -erlang"},
+    Port = serial_stub:start_port({spawn,priv_dir()++"/bin/serial -erlang"},
                        [binary,{packet,2}]),
     %Port = open_port({spawn,priv_dir()++"/bin/serial -erlang"},
     %                 [binary,{packet,2}]),

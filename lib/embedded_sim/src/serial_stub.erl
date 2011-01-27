@@ -33,6 +33,7 @@ start_port(PortName, PortSettings) ->
 % case if we get a good return and else crash or is that defensive porgrammng?
 init(Args) ->
     {ok, SerialClientNode} = application:get_env(embedded_sim, serial_client_node),
+
     {ok, disconnected, [{serial_client_node, SerialClientNode}|Args]}.
 
 disconnected({{?MODULE, _SerialClientNode},{command,Message}}, State) ->

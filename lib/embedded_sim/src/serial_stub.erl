@@ -32,7 +32,8 @@ start_port(PortName, PortSettings) ->
 % This caused an error that was tricky to see at first, should we
 % case if we get a good return and else crash or is that defensive porgrammng?
 init(Args) ->
-    {ok, SerialClientNode} = application:get_env(embedded_sim, serial_client_node),
+    {ok, SerialClientNode} = application:get_env(embedded_sim,
+                                                 serial_client_node),
 
     {ok, disconnected, [{serial_client_node, SerialClientNode}|Args]}.
 
@@ -78,14 +79,7 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 alive_check(SerialClientNode) ->
-    case rpc:call(SerialClientNode, erlang, whereis, [?MODULE]) of
-        undefined ->
-            false;
-        {badrpc, _Reason} ->
-            false;
-        _Other ->
-            true
-    end.
+    is_pid(rpc:call(SerialClientNode, erlang, whereis, [?MODULE])).
 
 % Todo: Add check for parent_pid?
 % if its not available we crash and get weird error?

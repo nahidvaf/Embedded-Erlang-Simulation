@@ -1,6 +1,12 @@
 -module(serial_stub).
+
+-author("Rickard Olsson").
+-author("Reza Javaheri").
+
 -behaviour(gen_fsm).
+
 -define(SERVER, ?MODULE).
+-include("../include/serial.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -32,10 +38,12 @@ start_port(PortName, PortSettings) ->
 % This caused an error that was tricky to see at first, should we
 % case if we get a good return and else crash or is that defensive porgrammng?
 init(Args) ->
-    {ok, SerialClientNode} = application:get_env(embedded_sim,
-                                                 serial_client_node),
-
-    {ok, disconnected, [{serial_client_node, SerialClientNode}|Args]}.
+    case application:get_env(embedded_sim, serial_client_node) of
+        {ok, SerialClientNode} ->
+            {ok, disconnected, [{serial_client_node, SerialClientNode}|Args]};
+        undefined ->
+            {stop, app_env_var_serial_client_node_unset}
+    end.
 
 disconnected({{?MODULE, _SerialClientNode},{command,Message}}, State) ->
     send_msg(Message, State),
@@ -51,14 +59,12 @@ handle_event(_Event, StateName, State) ->
 handle_sync_event(_Event, _From, StateName, State) ->
   {reply, ok, StateName, State}.
 
-handle_info({_Pid, {command, Message}}, connected, State) ->
+handle_info({_Pid, {command, [?SEND, Message]}}, connected, State) ->
     SerialClientNode = proplists:get_value(serial_client_node, State),
     gen_fsm:send_event({?MODULE, SerialClientNode},
                        {{?MODULE, node()},{command, Message}}),
     {next_state, connected, State};
-
-
-handle_info({_Pid, {command, Message}}, disconnected, State) ->
+handle_info({_Pid, {command, [?SEND, Message]}}, disconnected, State) ->
     SerialClientNode = proplists:get_value(serial_client_node, State),
     case alive_check(SerialClientNode) of
         true ->
@@ -67,7 +73,32 @@ handle_info({_Pid, {command, Message}}, disconnected, State) ->
             {next_state, connected, State};
         false ->
             {next_state, disconnected, State}
-    end.
+    end;
+%% TODO: handle connect
+handle_info({_Pid, {command, [?CONNECT]}}, StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle disconnect
+handle_info({_Pid, {command, [?DISCONNECT]}}, StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle open
+handle_info({_Pid, {command, [?OPEN, _TTY]}}, StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle close
+handle_info({_Pid, {command, [?CLOSE]}}, StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle both in and out speed, can be handled in same clause
+handle_info({_Pid, {command, [?SPEED, _NewInSpeed, " ", _NewOutSpeed,0]}},
+            StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle parity
+handle_info({_Pid, {command, [?PARITY_ODD]}}, StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle parity
+handle_info({_Pid, {command, [?PARITY_EVEN]}}, StateName, State) ->
+    {next_state, StateName, State};
+%% TODO : handle break
+handle_info({_Pid, {command, [?BREAK]}}, StateName, State) ->
+    {next_state, StateName, State}.
 
 terminate(_Reason, _StateName, _State) ->
   ok.

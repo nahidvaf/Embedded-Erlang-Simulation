@@ -6,13 +6,13 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_port/2]).
+-export([start_server/2]).
 
 %% ------------------------------------------------------------------
 %% gen_fsm State Exports
 %% ------------------------------------------------------------------
 
--export([pushed/2, released/2, timeout/2]).
+-export([pushed/2, released/2]).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Exports
@@ -26,24 +26,24 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_port(PortName, PortSettings) ->
-    stub:start_port(?MODULE, PortName, PortSettings).
+start_server(PortName, PortSettings) ->
+    stub:start_server(?MODULE, PortName, PortSettings).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
 init(_Args) ->
-    {ok, released}.
+    {ok, released, []}.
 
 pushed({command, push}, State) ->
-    {next_state, pushed, State, 40}.
+    {next_state, pushed, State, 40};
+
+pushed(timeout, State) ->
+    {next_state, released, State}.
 
 released({command, push}, State) ->
     {next_state, pushed, State, 40}.
-
-timeout(_, State) ->
-    {next_state, released, State}.
 
 handle_event(_Event, StateName, State) ->
   {next_state, StateName, State}.

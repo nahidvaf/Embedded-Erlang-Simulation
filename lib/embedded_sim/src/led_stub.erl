@@ -34,7 +34,7 @@ start_server(ServerMod, Args) ->
 %% ------------------------------------------------------------------
 
 init(_Args) ->
-    {ok, off}.
+    {ok, off, []}.
 
 on({command, turn_on}, State) ->
     {next_state, on, State};
@@ -58,7 +58,7 @@ handle_info({_Pid, {command, turn_off}}, _StateName, State) ->
     {next_state, off, State};
 handle_info({Pid, {command, brightness}}, StateName, State) ->
     Pid ! {self(), StateName},
-    {next_state, on, State};
+    {next_state, StateName, State};
 handle_info({Pid, {command, is_on}}, on, State) ->
     Pid ! {self(), true},
     {next_state, on, State};

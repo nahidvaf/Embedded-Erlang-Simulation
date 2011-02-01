@@ -59,18 +59,19 @@ turn_on_off(Config) ->
     Stub = proplists:get_value(stub, Config),
 
     % Check led status after started
-    send_message(Stub, brigthness),
+    send_message(Stub, brightness),
     ok = receive_message(Stub, off),
 
     % Turn on and check status
     send_message(Stub, turn_on),
-    send_message(Stub, brigthness),
+    send_message(Stub, brightness),
     ok = receive_message(Stub, on),
 
     % Turn off and check status
     send_message(Stub, turn_off),
     send_message(Stub, brightness),
-    ok = receive_message(Stub, off).
+    ok = receive_message(Stub, off),
+    ok.
 
 %%------------------------------------------------------------------------------
 %% Internal Functions

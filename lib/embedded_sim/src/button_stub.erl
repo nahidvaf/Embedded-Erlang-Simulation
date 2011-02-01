@@ -9,6 +9,12 @@
 -export([start_port/2]).
 
 %% ------------------------------------------------------------------
+%% gen_fsm State Exports
+%% ------------------------------------------------------------------
+
+-export([pushed/2, released/2, timeout/2]).
+
+%% ------------------------------------------------------------------
 %% gen_fsm Function Exports
 %% ------------------------------------------------------------------
 
@@ -27,7 +33,7 @@ start_port(PortName, PortSettings) ->
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-init(Args) ->
+init(_Args) ->
     {ok, released}.
 
 pushed({command, push}, State) ->
@@ -47,11 +53,14 @@ handle_sync_event(_Event, _From, StateName, State) ->
 
 handle_info({_Pid, {command, push}}, _StateName, State) ->
     {next_state, pushed, State, 40};
+handle_info({Pid, {command, state}}, StateName, State) ->
+    Pid ! {self(), StateName},
+    {next_state, StateName, State};
 handle_info({Pid, {command, is_pushed}}, pushed, State) ->
-    Pid ! true,
+    Pid ! {self(), true},
     {next_state, on, State};
 handle_info({Pid, {command, is_pushed}}, released, State) ->
-    Pid ! false,
+    Pid ! {self(), false},
     {next_state, on, State}.
 
 terminate(_Reason, _StateName, _State) ->

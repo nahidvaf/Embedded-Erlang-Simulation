@@ -6,28 +6,34 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_port/2]).
+-export([start_server/2]).
+
+%% ------------------------------------------------------------------
+%% gen_fsm State Exports
+%% ------------------------------------------------------------------
+
+-export([on/2, off/2]).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Exports
 %% ------------------------------------------------------------------
 
--export([init/1, handle_event/3,
-         handle_sync_event/4, handle_info/3, terminate/3, code_change/4
+-export([init/1, handle_event/3, handle_sync_event/4, handle_info/3,
+         terminate/3, code_change/4
         ]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_port(PortName, PortSettings) ->
-    stub:start_port(?MODULE, PortName, PortSettings).
+start_server(ServerMod, Args) ->
+    stub:start_server(?MODULE, ServerMod, Args).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-init(Args) ->
+init(_Args) ->
     {ok, off}.
 
 on({command, turn_on}, State) ->
@@ -51,19 +57,19 @@ handle_info({_Pid, {command, turn_on}}, _StateName, State) ->
 handle_info({_Pid, {command, turn_off}}, _StateName, State) ->
     {next_state, off, State};
 handle_info({Pid, {command, brightness}}, StateName, State) ->
-    Pid ! StateName,
+    Pid ! {self(), StateName},
     {next_state, on, State};
 handle_info({Pid, {command, is_on}}, on, State) ->
-    Pid ! true,
+    Pid ! {self(), true},
     {next_state, on, State};
 handle_info({Pid, {command, is_on}}, off, State) ->
-    Pid ! false,
+    Pid ! {self(), false},
     {next_state, on, State};
 handle_info({Pid, {command, is_off}}, on, State) ->
-    Pid ! false,
+    Pid ! {self(), false},
     {next_state, on, State};
 handle_info({Pid, {command, is_off}}, off, State) ->
-    Pid ! true,
+    Pid ! {self(), true},
     {next_state, on, State}.
 
 terminate(_Reason, _StateName, _State) ->

@@ -62,12 +62,12 @@ push(Config) ->
     ok = receive_message(Stub, released),
 
     % Pushes button and verifies it got pushed
-    send_message(Stub, push),
+    send_message(Stub, {push, 200}),
     send_message(Stub, state),
     ok = receive_message(Stub, pushed),
 
     %% % Waits and verifies button got release
-    timer:sleep(1000),
+    timer:sleep(210),
     send_message(Stub, state),
     ok = receive_message(Stub, released).
 

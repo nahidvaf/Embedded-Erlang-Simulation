@@ -3,4 +3,4 @@
 
 {cover, "embedded_sim.test.coverspec"}.
 
-{suites, "test", all}.
+{suites, "test", [all]}.

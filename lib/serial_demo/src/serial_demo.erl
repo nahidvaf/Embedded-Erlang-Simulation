@@ -10,9 +10,11 @@
 -define(SIGNAL, "signal").
 
 start() ->
-    SerialPid = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
-    spawn_link(?MODULE, user_button, [self()]),
-    init(SerialPid).
+    _SerialPid = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
+
+    _ButtonPid = button_stub:start_server(beagle_button, []),
+
+    _LedPid    = led_stub:start(beagle_led, []).
 
 %%
 % LED controller states
@@ -27,7 +29,7 @@ init(SerialPid) ->
         {data, <<?SIGNAL>>} ->
             on(SerialPid)
     end.
-            
+
 
 off(SerialPid) ->
     light(?OFF),

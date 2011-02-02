@@ -26,8 +26,8 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_server(PortName, PortSettings) ->
-    stub:start_server(?MODULE, PortName, PortSettings).
+start_server(ServerMod, Args) ->
+    stub:start_server(?MODULE, ServerMod, Args).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Definitions

@@ -33,15 +33,17 @@ start_server(ServerMod, Args) ->
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-init(_Args) ->
-    {ok, released, []}.
+init(Args) ->
+    {ok, released, Args}.
 
 pushed({command, {push, _Time}}, State) ->
     {next_state, pushed, State};
 pushed(change_state, State) ->
+    send_msg(released, State),
     {next_state, released, State}.
 
 released({command, {push, Time}}, State) ->
+    send_msg(pushed, State),
     gen_fsm:send_event_after(Time, change_state),
     {next_state, pushed, State};
 released(change_state, State) ->
@@ -54,7 +56,7 @@ handle_sync_event(_Event, _From, StateName, State) ->
   {reply, ok, StateName, State}.
 
 handle_info({_Pid, {command, {push, _Time}}}, pushed, State) ->
-    {next_state, pushed, State};
+    pushed({command, {push, _Time}}, State);
 handle_info({_Pid, {command, {push, Time}}}, released, State) ->
     released({command, {push, Time}}, State);
 handle_info({Pid, {command, state}}, StateName, State) ->
@@ -77,3 +79,6 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+send_msg(Message, State) ->
+    ParentPid = proplists:get_value(parent_pid, State),
+    ParentPid ! {self(), Message}.

@@ -59,29 +59,28 @@ push(Config) ->
 
     % Check button status after started
     send_message(Stub, state),
-    ok = receive_message(Stub, released),
+    ok = receive_message(Stub, released, 1000),
 
     % Pushes button and verifies it got pushed
     send_message(Stub, {push, 200}),
+    ok = receive_message(Stub, pushed, 1000),
+    ok = receive_message(Stub, released, 1000),
     send_message(Stub, state),
-    ok = receive_message(Stub, pushed),
 
-    %% % Waits and verifies button got release
-    timer:sleep(210),
-    send_message(Stub, state),
-    ok = receive_message(Stub, released).
+    % Check button status after released
+    ok = receive_message(Stub, released, 1000).
 
 %%------------------------------------------------------------------------------
 %% Internal Functions
 %%------------------------------------------------------------------------------
-receive_message(Stub, Message) ->
+receive_message(Stub, Message, TimeOut) ->
     receive
         {Stub, Message} ->
             ok;
         Other ->
             {message_not_recognized, Other}
-    after 1000 ->
-            no_response_in_1000ms
+    after TimeOut ->
+            timeout_no_response
     end.
 
 send_message(Stub, Message) ->

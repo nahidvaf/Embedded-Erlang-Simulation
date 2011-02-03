@@ -33,8 +33,8 @@ start_server(ServerMod, Args) ->
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-init(_Args) ->
-    {ok, off, []}.
+init(Args) ->
+    {ok, off, Args}.
 
 on({command, turn_on}, State) ->
     {next_state, on, State};
@@ -53,8 +53,10 @@ handle_sync_event(_Event, _From, StateName, State) ->
   {reply, ok, StateName, State}.
 
 handle_info({_Pid, {command, turn_on}}, _StateName, State) ->
+    send_msg(on, State),
     {next_state, on, State};
 handle_info({_Pid, {command, turn_off}}, _StateName, State) ->
+    send_msg(off, State),
     {next_state, off, State};
 handle_info({Pid, {command, brightness}}, StateName, State) ->
     Pid ! {self(), StateName},
@@ -81,3 +83,9 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+send_msg(Message, State) ->
+    %ParentPid = proplists:get_value(parent_pid, State),
+    %ParentPid ! {self(), Message}.
+    MonitorServer = proplists:get_value(monitor_server, State),
+    gen_server:cast(MonitorServer,
+                    {?MODULE, atom_to_list(Message)}).

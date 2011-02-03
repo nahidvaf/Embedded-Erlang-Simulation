@@ -8,12 +8,12 @@
         {"hard",{erlang,port,Args}}).
 
 start_server(Mod, ServerMod, Args) ->
-    SimArgs = [{parent_pid, self()}],
+    SimArgs = [{parent_pid, self()}, {monitor_server, stub_monitor}],
     Setup = [{"hard", {ServerMod, start_link, Args}}, ?GEN_SIM(Mod, SimArgs)],
     start(Setup).
 
 start_port(Mod, PortName, PortSettings) ->
-    SimArgs = [{parent_pid, self()}],
+    SimArgs = [{parent_pid, self()}, {monitor_server, stub_monitor}],
     Setup = [?GEN_HARD([PortName, PortSettings]), ?GEN_SIM(Mod, SimArgs)],
     start(Setup).
 

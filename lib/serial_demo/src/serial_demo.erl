@@ -14,6 +14,8 @@ start() ->
 % LED controller states
 %%
 init(MonitorPid) ->
+    % Start ui monitor
+    _StubMonitor     = stub_monitor:start_link(),
     % Start device servers
     SerialPid       = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
     {ok, LedPid}    = led_stub:start_server(beagle_led, []),
@@ -24,16 +26,16 @@ init(MonitorPid) ->
 process(SerialPid, LedPid, ButtonPid, MonitorPid) ->
     receive
         {data, <<?OFF>>} ->
-            MonitorPid ! data_off_recieved,
+            %MonitorPid ! data_off_recieved,
             light(LedPid, ?OFF);
         {data, <<?ON>>} ->
-            MonitorPid ! data_on_recieved,
+            %MonitorPid ! data_on_recieved,
             light(LedPid, ?ON);
         {ButtonPid, pushed} ->
-            MonitorPid ! user_pushed_recieved,
+            %MonitorPid ! user_pushed_recieved,
             signal(SerialPid, <<?ON>>);
         {ButtonPid, released} ->
-            MonitorPid ! user_released_recieved,
+            %MonitorPid ! user_released_recieved,
             signal(SerialPid, <<?OFF>>)
     end,
     process(SerialPid, LedPid, ButtonPid, MonitorPid).

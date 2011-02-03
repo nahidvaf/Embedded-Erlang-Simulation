@@ -81,4 +81,6 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 
 send_msg(Message, State) ->
     ParentPid = proplists:get_value(parent_pid, State),
-    ParentPid ! {self(), Message}.
+    ParentPid ! {self(), Message},
+    MonitorServer = proplists:get_value(monitor_server, State),
+    gen_server:cast(MonitorServer, {?MODULE, atom_to_list(Message)}).

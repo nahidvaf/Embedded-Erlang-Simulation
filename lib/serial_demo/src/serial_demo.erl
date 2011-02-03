@@ -1,76 +1,75 @@
 -module(serial_demo).
 
 -compile(export_all).
--export([start/0, user_button/1]).
+-export([start/0, user_button_loop/2, init/1]).
 
 -define(ON, "1").
 -define(OFF, "0").
 -define(LED, "1").
 -define(GPIO, "7").
--define(SIGNAL, "signal").
 
 start() ->
-    _SerialPid = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
 
-    _ButtonPid = button_stub:start_server(beagle_button, []),
-
-    _LedPid    = led_stub:start(beagle_led, []).
+    ListenerPid     = spawn_link(?MODULE, init, [self()]),
+    {ok, ButtonPid} = button_stub:start_server(beagle_button, []),
+    spawn_link(?MODULE, user_button_loop, [ButtonPid, ListenerPid]).
 
 %%
 % LED controller states
 %%
-init(SerialPid) ->
-    light(?OFF),
+init(Monitor_Pid) ->
+    {ok, LedPid}    = led_stub:start_server(beagle_led, []),
+    SerialPid       = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
+    process(SerialPid, LedPid, Monitor_Pid).
 
+process(SerialPid, LedPid, Monitor_Pid) ->
     receive
-        user_button ->
-            signal(SerialPid),
-            off(SerialPid);
-        {data, <<?SIGNAL>>} ->
-            on(SerialPid)
-    end.
-
-
-off(SerialPid) ->
-    light(?OFF),
-
-    receive
-        {data, <<?SIGNAL>>} ->
-            on(SerialPid)
-    end.
-
-on(SerialPid) ->
-    light(?ON),
-
-    receive
-        user_button -> ok
+        {data, <<?OFF>>} ->
+            Monitor_Pid ! data_off_recieved,
+            light(LedPid, ?OFF);
+        {data, <<?ON>>} ->
+            Monitor_Pid ! data_on_recieved,
+            light(LedPid, ?ON);
+        user_button_pushed ->
+            Monitor_Pid ! user_pushed_recieved,
+            signal(SerialPid, <<?ON>>);
+        user_button_released ->
+            Monitor_Pid ! user_released_recieved,
+            signal(SerialPid, <<?OFF>>)
     end,
-
-    signal(SerialPid),
-    off(SerialPid).
+    process(SerialPid, LedPid, Monitor_Pid).
 
 %%
 % User button listener
 %%
-user_button(ListenerPid) ->
-    file:write_file("/sys/class/gpio/export", ?GPIO),
-    file:write_file("/sys/class/gpio/gpio"?GPIO, "in"),
-    user_button_loop(ListenerPid).
+%% user_button(ListenerPid) ->
+%%     file:write_file("/sys/class/gpio/export", ?GPIO),
+%%     file:write_file("/sys/class/gpio/gpio"?GPIO, "in"),
+%%     user_button_loop(ListenerPid).
 
-user_button_loop(ListenerPid) ->
-    case file:read_file("/sys/class/gpio/gpio"?GPIO) of
-        {ok, <<?ON, _/binary>>} ->
-            ListenerPid ! user_button;
-        _ ->
-            timer:sleep(100),
-            user_button_loop(ListenerPid)
-    end.
+user_button_loop(ButtonPid, ListenerPid) ->
+    ButtonPid ! {self(), {command, state}},
+    receive
+        {ButtonPid, pushed} ->
+            ListenerPid ! user_button_pushed;
+        {ButtonPid, released} ->
+            ListenerPid ! user_button_released
+        after 1000 ->
+            exit(button_simulator_not_responding)
+    end,
+    timer:sleep(10),
+    user_button_loop(ButtonPid, ListenerPid).
 
 %%
 % Internal mumbojumbo
 %%
-signal(SerialPid) ->
-    SerialPid ! {send, <<?SIGNAL>>}.
+signal(SerialPid, Data) ->
+    SerialPid ! {send, Data}.
 
-light(State) ->
-    file:write_file("/sys/class/leds/beagleboard::"?LED"/brightness", State).
+light(LedPid, State) ->
+    LedPid ! translate(State).
+
+translate(?ON) ->
+    {self(), {command, turn_on}};
+translate(?OFF) ->
+    {self(), {command, turn_off}}.

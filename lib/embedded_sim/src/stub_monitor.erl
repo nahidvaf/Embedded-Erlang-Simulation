@@ -1,3 +1,8 @@
+%% -----------------------------------------------------------------
+%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% ------------------------------------------------------------------
+
 -module(stub_monitor).
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).

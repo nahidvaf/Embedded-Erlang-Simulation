@@ -1,3 +1,8 @@
+%% -----------------------------------------------------------------
+%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% ------------------------------------------------------------------
+
 -module(button_stub).
 -behaviour(gen_fsm).
 -define(SERVER, ?MODULE).

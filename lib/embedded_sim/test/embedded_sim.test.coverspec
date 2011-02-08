@@ -1,1 +1,6 @@
+%% -----------------------------------------------------------------
+%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% ------------------------------------------------------------------
+
 {incl_dirs, ["src","ebin"]}.

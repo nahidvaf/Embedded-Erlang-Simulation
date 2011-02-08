@@ -1,3 +1,7 @@
+%% -----------------------------------------------------------------
+%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% ------------------------------------------------------------------
 
 -module(embedded_sim_sup).
 

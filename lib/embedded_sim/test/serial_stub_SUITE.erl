@@ -1,3 +1,8 @@
+%% -----------------------------------------------------------------
+%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% ------------------------------------------------------------------
+
 -module(serial_stub_SUITE).
 -include_lib("common_test/include/ct.hrl").
 -include("../include/serial.hrl").

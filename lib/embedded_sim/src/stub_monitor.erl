@@ -1,7 +1,10 @@
-%% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% ------------------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
-%% ------------------------------------------------------------------
+%% @doc Server used by stubs for printing out messages. Serves as
+%% program output while the stubs handle user events
+%% @end
+%% ------------------------------------------------------------------------------
 
 -module(stub_monitor).
 -behaviour(gen_server).
@@ -24,6 +27,10 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+%% ------------------------------------------------------------------------------
+%% @doc Starts a stub_monitor as a gen_server and registers as module name
+%% @end
+%% ------------------------------------------------------------------------------
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 

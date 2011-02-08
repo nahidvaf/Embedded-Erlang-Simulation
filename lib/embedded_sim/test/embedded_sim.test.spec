@@ -1,5 +1,5 @@
 %% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
 %% ------------------------------------------------------------------
 

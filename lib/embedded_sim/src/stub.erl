@@ -1,5 +1,5 @@
 %% ------------------------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
 %% @doc Stateless module that given the needed settings opens a port or starts
 %% a server based on the os environmental variable "EMBEDDED_ENV".
@@ -14,17 +14,17 @@
 %% Interface exports
 -export([start/1, start_port/3, start_server/3]).
 
+%% Convenient macros for creating common setups for "sim" and "hard"
 -define(GEN_SIM(Mod,Args),
         {"sim", {gen_fsm,start_link,[{local, Mod},Mod,Args,[]]}}).
 -define(GEN_HARD(Args),
         {"hard",{erlang,open_port,Args}}).
 
 %% ------------------------------------------------------------------------------
-%% @doc Convinient function to start a normal server interfacing a device and
+%% @doc Convenient function to start a normal server interfacing a device and
 %% gen_fsm as simulator
 %% @end
 %% ------------------------------------------------------------------------------
-
 -spec(start_server/3 :: (module(), function(), [term()])
       ->  {ok, pid()} |
           {ok, port()} |
@@ -36,10 +36,10 @@ start_server(Mod, ServerMod, Args) ->
     start(Setup).
 
 %% ------------------------------------------------------------------------------
-%% @doc Convinient function with a setup for port and gen_fsm as simulator
+%% @doc Convenient function with a setup for port and gen_fsm as simulator
 %% @end
 %% ------------------------------------------------------------------------------
--spec(start_port/3 :: (module(), {spawn, string()}, ) ->
+-spec(start_port/3 :: (module(), {spawn, string()}, [term()]) ->
              {ok, pid()} |
              {ok, port()} |
              {error, no_setup} |
@@ -62,9 +62,9 @@ start_port(Mod, PortName, PortSettings) ->
 start(Setup) ->
     init(Setup, os:getenv("EMBEDDED_ENV")).
 
-%-------------------------------------------------------------------------------
+%--------------------------------------------------------------------------------
 % Internal Functions
-%-------------------------------------------------------------------------------
+%--------------------------------------------------------------------------------
 
 init(Setup, false) ->
      init(Setup, "hard");

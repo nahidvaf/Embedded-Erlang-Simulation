@@ -1,6 +1,8 @@
-%% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% ------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
+%% @doc Simulates serial port driver
+%% @end
 %% ------------------------------------------------------------------
 
 -module(serial_stub).
@@ -32,6 +34,10 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+%% ------------------------------------------------------------------------------
+%% @doc Starts a serial stub or a port depending on OS env var EMBEDDED_SIM
+%% @end
+%% ------------------------------------------------------------------------------
 start_port(PortName, PortSettings) ->
     stub:start_port(?MODULE, PortName, PortSettings).
 
@@ -39,9 +45,6 @@ start_port(PortName, PortSettings) ->
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-% Todo: {ok, SerialClientNode} was just SerialClientNode before
-% This caused an error that was tricky to see at first, should we
-% case if we get a good return and else crash or is that defensive porgrammng?
 init(Args) ->
     case application:get_env(embedded_sim, serial_client_node) of
         {ok, SerialClientNode} ->
@@ -79,29 +82,29 @@ handle_info({_Pid, {command, [?SEND, Message]}}, disconnected, State) ->
         false ->
             {next_state, disconnected, State}
     end;
-%% TODO: handle connect
+%% @TODO: handle connect
 handle_info({_Pid, {command, [?CONNECT]}}, StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle disconnect
+%% @TODO : handle disconnect
 handle_info({_Pid, {command, [?DISCONNECT]}}, StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle open
+%% @TODO : handle open
 handle_info({_Pid, {command, [?OPEN, _TTY]}}, StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle close
+%% @TODO : handle close
 handle_info({_Pid, {command, [?CLOSE]}}, StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle both in and out speed, can be handled in same clause
+%% @TODO : handle both in and out speed, can be handled in same clause
 handle_info({_Pid, {command, [?SPEED, _NewInSpeed, " ", _NewOutSpeed,0]}},
             StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle parity
+%% @TODO : handle parity
 handle_info({_Pid, {command, [?PARITY_ODD]}}, StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle parity
+%% @TODO : handle parity
 handle_info({_Pid, {command, [?PARITY_EVEN]}}, StateName, State) ->
     {next_state, StateName, State};
-%% TODO : handle break
+%% @TODO : handle break
 handle_info({_Pid, {command, [?BREAK]}}, StateName, State) ->
     {next_state, StateName, State}.
 
@@ -117,8 +120,8 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 alive_check(SerialClientNode) ->
     is_pid(rpc:call(SerialClientNode, erlang, whereis, [?MODULE])).
 
-% Todo: Add check for parent_pid?
-% if its not available we crash and get weird error?
+% @Todo: Add check for parent_pid?
+% if its not available we crash and get an error?
 send_msg(Message, State) ->
     ParentPid = proplists:get_value(parent_pid, State),
     ParentPid ! {whereis(?MODULE), {data, Message}}.

@@ -1,7 +1,9 @@
-%% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% ------------------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
-%% ------------------------------------------------------------------
+%% @doc Simulates button gen_server API "driver"
+%% @end
+%% ------------------------------------------------------------------------------
 
 -module(button_stub).
 -behaviour(gen_fsm).
@@ -31,6 +33,11 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+%% ------------------------------------------------------------------------------
+%% @doc Starts a button stub or a gen server acting as a "driver" depending on OS
+%% env var EMBEDDED_SIM
+%% @end
+%% ------------------------------------------------------------------------------
 start_server(ServerMod, Args) ->
     stub:start_server(?MODULE, ServerMod, Args).
 
@@ -60,6 +67,7 @@ handle_event(_Event, StateName, State) ->
 handle_sync_event(_Event, _From, StateName, State) ->
   {reply, ok, StateName, State}.
 
+%% Redirects call to pushed, purpose is to enable to both bang and use gen_fsm
 handle_info({_Pid, {command, {push, _Time}}}, pushed, State) ->
     pushed({command, {push, _Time}}, State);
 handle_info({_Pid, {command, {push, Time}}}, released, State) ->

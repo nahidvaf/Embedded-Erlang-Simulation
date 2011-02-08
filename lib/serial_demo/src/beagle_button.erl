@@ -1,17 +1,14 @@
-%% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% ------------------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
-%% ------------------------------------------------------------------
-
+%% @doc Beagle button API for handling a port reading button device file
+%% @end
+%% ------------------------------------------------------------------------------
 -module(beagle_button).
 %-behaviour(gen_server).
 %-define(SERVER, ?MODULE).
 
-%-include("../include/io.hrl").
--define(ON, "1").
--define(OFF, "0").
--define(LED, "1").
--define(GPIO, "7").
+-include("../include/io.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -29,6 +26,11 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+%% ------------------------------------------------------------------------------
+%% @doc Starts a server handling a port reading from and event device file,
+%% sending messages of when button is pushed and released
+%% @end
+%% ------------------------------------------------------------------------------
 start_link(Args) ->
     {ok, spawn(?MODULE, init, [Args])}.
 
@@ -37,7 +39,8 @@ start_link(Args) ->
 %% ------------------------------------------------------------------
 
 init(ListenerPid) ->
-    _ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"}, [use_stdio, stream, binary]),
+    _ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"},
+                            [use_stdio, stream, binary]),
     loop(ListenerPid).
 
 loop(ListenerPid) ->

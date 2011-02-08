@@ -1,3 +1,7 @@
+%% ------------------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% ------------------------------------------------------------------------------
 
 -module(serial_demo_sup).
 

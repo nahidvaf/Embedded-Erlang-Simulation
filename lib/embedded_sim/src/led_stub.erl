@@ -1,6 +1,8 @@
 %% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
+%% @doc Simulates led gen_server API "driver"
+%% @end
 %% ------------------------------------------------------------------
 
 -module(led_stub).
@@ -31,6 +33,11 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+%% ------------------------------------------------------------------------------
+%% @doc Starts a led stub or a gen server acting as a "driver" depending on OS
+%% env var EMBEDDED_SIM
+%% @end
+%% ------------------------------------------------------------------------------
 start_server(ServerMod, Args) ->
     stub:start_server(?MODULE, ServerMod, Args).
 
@@ -65,19 +72,7 @@ handle_info({_Pid, {command, turn_off}}, _StateName, State) ->
     {next_state, off, State};
 handle_info({Pid, {command, brightness}}, StateName, State) ->
     Pid ! {self(), StateName},
-    {next_state, StateName, State};
-handle_info({Pid, {command, is_on}}, on, State) ->
-    Pid ! {self(), true},
-    {next_state, on, State};
-handle_info({Pid, {command, is_on}}, off, State) ->
-    Pid ! {self(), false},
-    {next_state, on, State};
-handle_info({Pid, {command, is_off}}, on, State) ->
-    Pid ! {self(), false},
-    {next_state, on, State};
-handle_info({Pid, {command, is_off}}, off, State) ->
-    Pid ! {self(), true},
-    {next_state, on, State}.
+    {next_state, StateName, State}.
 
 terminate(_Reason, _StateName, _State) ->
   ok.
@@ -89,8 +84,6 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 send_msg(Message, State) ->
-    %ParentPid = proplists:get_value(parent_pid, State),
-    %ParentPid ! {self(), Message}.
     MonitorServer = proplists:get_value(monitor_server, State),
     gen_server:cast(MonitorServer,
                     {?MODULE, atom_to_list(Message)}).

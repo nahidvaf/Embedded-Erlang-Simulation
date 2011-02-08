@@ -1,18 +1,20 @@
+%% ------------------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
+%% @author Reza Javaheri <reza@ooodev.com>
+%% @doc Demo application for showing how Erlang Embedded Simulation can be used
+%% @end
+%% ------------------------------------------------------------------------------
+
 -module(serial_demo).
 
 -compile(export_all).
 -export([start/0, init/1]).
 
--define(ON, "1").
--define(OFF, "0").
--define(LED, "1").
--define(GPIO, "7").
+-include("../include/io.hrl").
 
 start() ->
     _ListenerPid     = spawn_link(?MODULE, init, [self()]).
-%%
-% LED controller states
-%%
+
 init(MonitorPid) ->
     % Start ui monitor
     _StubMonitor     = stub_monitor:start_link(),
@@ -41,17 +43,9 @@ process(SerialPid, LedPid, ButtonPid, MonitorPid) ->
     end,
     process(SerialPid, LedPid, ButtonPid, MonitorPid).
 
-%%
-% User button listener
-%%
-%% user_button(ListenerPid) ->
-%%     file:write_file("/sys/class/gpio/export", ?GPIO),
-%%     file:write_file("/sys/class/gpio/gpio"?GPIO, "in"),
-%%     user_button_loop(ListenerPid).
-
-%%
-% Internal mumbojumbo
-%%
+%--------------------------------------------------------------------------------
+% Internal Functions
+%--------------------------------------------------------------------------------
 signal(SerialPid, Data) ->
     SerialPid ! {send, Data}.
 

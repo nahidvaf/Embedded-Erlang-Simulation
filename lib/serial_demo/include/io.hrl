@@ -3,4 +3,7 @@
 %% @author Reza Javaheri <reza@ooodev.com>
 %% ------------------------------------------------------------------
 
-{incl_dirs, ["src","ebin"]}.
+-define(ON, "1").
+-define(OFF, "0").
+-define(LED, "usr1").
+-define(GPIO, "7").

@@ -1,17 +1,15 @@
-%% -----------------------------------------------------------------
-%% @author Rickard Olsson <rickard@oodev.com>
+%% ------------------------------------------------------------------------------
+%% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
-%% ------------------------------------------------------------------
+%% @doc Beagle led API for reading and writing to a file representing led state
+%% @end
+%% ------------------------------------------------------------------------------
 
 -module(beagle_led).
 %-behaviour(gen_server).
 %-define(SERVER, ?MODULE).
 
-%-include("../include/io.hrl").
--define(ON, "1").
--define(OFF, "0").
--define(LED, "usr1").
--define(GPIO, "7").
+-include("../include/io.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -29,6 +27,11 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+%% ------------------------------------------------------------------------------
+%% @doc Starts a server handling reading and writing to a file representing
+%% the led state
+%% @end
+%% ------------------------------------------------------------------------------
 start_link(Args) ->
     {ok, spawn(?MODULE, init, [Args])}.
   %gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).

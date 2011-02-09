@@ -15,7 +15,7 @@ See `lib/serial_demo/serial_demo.erl`
 If you find any issues with Erlang-Embedded-Simulation or have any comments please [create an issue] [1]
 
 ## Licenses
-Erlang-Embedded-Simulation exists under different open-source licenses. The libs serial_demo and embedded_sim will be licensed ASAP.
+Erlang-Embedded-Simulation exists under different open-source licenses.
 
 ### Erlang-Embedded-Simulation
 Is licensed under:

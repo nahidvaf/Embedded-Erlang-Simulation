@@ -17,6 +17,14 @@ If you find any issues with Erlang-Embedded-Simulation or have any comments plea
 ## Licenses
 Erlang-Embedded-Simulation exists under different open-source licenses. The libs serial_demo and embedded_sim will be licensed ASAP.
 
+### Erlang-Embedded-Simulation
+Is licensed under:
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+Includes serial_demo and embedded_sim
+
 ### erlang-serial
 Copyright (c) 1996, 1999 Johan Bevemyr
 Copyright (c) 2007, 2009 Tony Garnock-Jones
@@ -27,11 +35,6 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-### serial-demo
-TBD
-
-### embedded-sim
-TBD
 
 [1]: https://github.com/EmbeddedErlang/Embedded-Erlang-Simulation/issues "Erlang-Embedded-Simulation issues"
 

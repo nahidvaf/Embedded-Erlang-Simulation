@@ -19,15 +19,7 @@
 %% @author Reza Javaheri <reza@ooodev.com>
 %% ------------------------------------------------------------------
 
-{application, embedded_sim,
- [
-  {description, "Simulators for device drivers"},
-  {vsn, "0.1"},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
-  {mod, { embedded_sim_app, []}},
-  {env, []}
- ]}.
+-define(ON, "1").
+-define(OFF, "0").
+-define(LED, "usr1").
+-define(GPIO, "7").

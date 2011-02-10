@@ -13,7 +13,7 @@ We are using rebar to build and generate nodes.
 
 To build the Embedded-Erlang-Simulation run ./rebar compile from the project root folder.
 
-We have setup two nodes under nodes called sim_node and sim_node2, run ./rebar generate to generate to nodes.
+We have setup two nodes under nodes called sim_node and sim_node2, run ./rebar generate to generate the nodes.
 
 ### Run on Desktop using Simulators
 
@@ -26,18 +26,20 @@ To compile and generate run from the project root
 `./rebar generate`
 
 Open two terminals and set os env to "sim" on both
+
 `export EMBEDDED_ENV=sim`
 
-Now start one of the nodes in each terminal
+Now start sim_node in one of the terminals and sim_node2 in the other
 
-`nodes/sim_node/sim_node/bin/sim_node`
-`nodes/sim_node2/sim_node2/bin/sim_node2`
+`nodes/sim_node/sim_node/bin/sim_node console`
+
+`nodes/sim_node2/sim_node2/bin/sim_node2 console`
 
 In both nodes start the serial demo
 
 `serial_demo:start().`
 
-To simulate a button held down in 3 seconds
+To simulate a button held down during 3 seconds
 
 `button_stub ! {self(), {command, {push, 3000}}}.`
 
@@ -45,15 +47,15 @@ Now the simulator monitor should print on the screen the states of the button in
 
 ### Run on Hardware
 
-To run serial demo on a beagle board with the erlang embedded setup all you need to do is put the code on your memory card, you can use scp over usb network. Remembar to compile before uploading the code.
+To run serial demo on two beagle boards with erlang embedded setup all you need to do is put the code on the memory cards, you can use scp over usb network. Remember to compile before uploading the code.
 
 `./rebar compile`
 
-Connect two beagle boards over serial and make sure the rx tx are crossed over the serial, you have to use a crossed serial cable. Then do the following on both the boards
+Connect two beagle boards over serial and make sure the rx tx are crossed over the serial, you have to use a crossed serial cable. Then do the following on both the boards.
 
-Login to the beagleboard over serial or usb network. See erlang embedded and beagleboard how to setup it up.
+Login to the beagleboard over serial or usb network. See [erlang embedded][2] and [beagle board][3] how to setup it up.
 
-From the top folder of Embedded-Erlang-Simulators
+From the top folder of Embedded-Erlang-Simulation
 
 `cd lib/erlang-serial`
 
@@ -65,7 +67,7 @@ Run start the serial demo
 
 `serial_demo:start().`3
 
-If you push the user1 button on one of the boards the usr1 led should light up, when you release the button the is should turn off again.
+If you push the user1 button on one of the boards the usr1 led should light up on the other board, when you release the button it is should turn off again.
 
 
 ## Examples
@@ -99,3 +101,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 [1]: https://github.com/EmbeddedErlang/Embedded-Erlang-Simulation/issues "Erlang-Embedded-Simulation issues"
 
 [2]: http://embedded-erlang.org/ "Erlang-Embedded webpage"
+
+[3]: http://beagleboard.org/

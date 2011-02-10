@@ -8,6 +8,66 @@ Testing code on hardware frequently is inconvenient, takes time and only possibl
 
 Our thesis is related to Erlang Embedded which is based on two other thesis projects conducted at Erlang Solutions by four students from Uppsala University, see [http://embedded-erlang.org/] [2]. Erlang embedded provides a linux distro and an erlang release which is tailored for embedded hardware, and the Beagle Board in specific. We continue on their work and use their release and the same hardware.
 
+## Serial Demo
+We are using rebar to build and generate nodes.
+
+To build the Embedded-Erlang-Simulation run ./rebar compile from the project root folder.
+
+We have setup two nodes under nodes called sim_node and sim_node2, run ./rebar generate to generate to nodes.
+
+### Run on Desktop using Simulators
+
+Compile and generate the nodes if you havn't already.
+
+To compile and generate run from the project root
+
+`./rebar compile`
+
+`./rebar generate`
+
+Open two terminals and set os env to "sim" on both
+`export EMBEDDED_ENV=sim`
+
+Now start one of the nodes in each terminal
+
+`nodes/sim_node/sim_node/bin/sim_node`
+`nodes/sim_node2/sim_node2/bin/sim_node2`
+
+In both nodes start the serial demo
+
+`serial_demo:start().`
+
+To simulate a button held down in 3 seconds
+
+`button_stub ! {self(), {command, {push, 3000}}}.`
+
+Now the simulator monitor should print on the screen the states of the button in the node you pushed it, and the states of the led in the other node.
+
+### Run on Hardware
+
+To run serial demo on a beagle board with the erlang embedded setup all you need to do is put the code on your memory card, you can use scp over usb network. Remembar to compile before uploading the code.
+
+`./rebar compile`
+
+Connect two beagle boards over serial and make sure the rx tx are crossed over the serial, you have to use a crossed serial cable. Then do the following on both the boards
+
+Login to the beagleboard over serial or usb network. See erlang embedded and beagleboard how to setup it up.
+
+From the top folder of Embedded-Erlang-Simulators
+
+`cd lib/erlang-serial`
+
+Fire up an erlang shell with pz
+
+`/opt/local/erlang/erts-'version'/bin/erl -pz ebin ../embedded-sim/ebin ../serial-demo/ebin`
+
+Run start the serial demo
+
+`serial_demo:start().`3
+
+If you push the user1 button on one of the boards the usr1 led should light up, when you release the button the is should turn off again.
+
+
 ## Examples
 See `lib/serial_demo/serial_demo.erl`
 

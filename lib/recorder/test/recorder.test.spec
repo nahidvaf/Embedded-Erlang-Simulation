@@ -14,17 +14,14 @@
 %% limitations under the License.
 %% ------------------------------------------------------------------------------
 
-%% ------------------------------------------------------------------------------
+%% -----------------------------------------------------------------
 %% @author Rickard Olsson <rickard@ooodev.com>
 %% @author Reza Javaheri <reza@ooodev.com>
-%% @doc
-%% ------------------------------------------------------------------------------
+%% ------------------------------------------------------------------
 
-%{cover_enabled, true}.
-{sub_dirs, ["lib/erlang_serial",
-           "lib/embedded_sim",
-           "lib/serial_demo",
-           "lib/recorder",
-           "nodes/sim_node",
-           "nodes/sim_node2"]}.
-{erl_opts, [debug_info]}.
+{config, "recorder.test.config"}.
+
+{cover, "recorder.test.coverspec"}.
+
+%{suites, "test", [all]}.
+{cases, "test", 'recorder_SUITE', [record]}.

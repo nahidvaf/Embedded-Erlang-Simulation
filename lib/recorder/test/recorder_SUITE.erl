@@ -29,7 +29,7 @@
          all/0]).
 
 %% Test cases
--export([]).
+-export([record/1]).
 
 %%------------------------------------------------------------------------------
 %% Common test callbacks
@@ -46,6 +46,7 @@ init_per_suite(Config) ->
     Config.
 
 init_per_testcase(_Case, Config) ->
+    rec:start("dump_log"),
     Config.
 %%------------------------------------------------------------------------------
 %% Teardowns
@@ -54,11 +55,12 @@ end_per_suite(_Config) ->
     ok.
 
 end_per_testcase(_Case, Config) ->
+    rec:stop(),
     ok.
 
 %% Returns the list of groups and test cases to be tested
 all() ->
-    [].
+    [record].
 
 
 %%------------------------------------------------------------------------------
@@ -73,25 +75,37 @@ record() ->
     [{require, recorder_test_message}].
 
 record(Config) ->
-
-    Pid = spawn(fun() ->
-                        receive
-                            {P, Any} ->
-                                P ! Any
-                        end
-                end),
-    dbg:p(Pid, [m]),
-    Pid.
-
     Message = ct:get_config(recorder_test_message),
 
-    % Test disconnected states
-    SerialStub ! {self(), {command, [?SEND, Message]}},
-    ok = receive_message(SerialStub, Message),
-    % Send message twice so we test connected state as well
-    SerialStub ! {self(), {command, [?SEND, Message]}},
-    ok = receive_message(SerialStub, Message).
+    TestFun = fun() ->
+	    receive
+		{P, Any} ->
+		    ok
+		    %P ! Any
+	    end
+    end,
 
+    Pid1 = spawn(TestFun),
+    rec:add_process(Pid1),
+
+    Pid1 ! {self(), Message},
+
+    timer:sleep(100),
+
+    [{trace, _, {pid, Pid1}, {type, 'receive'}, {msg, Message}}] =
+	file:read_file("dump_log"),
+
+    Pid2 = spawn(TestFun),
+    rec:add_process(Pid2),
+
+    Pid2 ! {self(), Message},
+
+    timer:sleep(100),
+
+    [_|{trace, _, {pid, Pid2}, {type, 'receive'}, {msg, Message}}] =
+	file:consult("dump_log"),
+
+    ok.
 
 %%------------------------------------------------------------------------------
 %% Internal Functions

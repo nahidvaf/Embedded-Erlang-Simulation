@@ -23,4 +23,5 @@
 
 {cover, "embedded_sim.test.coverspec"}.
 
-{suites, "test", [all]}.
+%{suites, "test", [all]}.
+{cases, "test", 'serial_stub_SUITE', [driver_send]}.

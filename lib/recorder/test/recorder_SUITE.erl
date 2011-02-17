@@ -46,7 +46,6 @@ init_per_suite(Config) ->
     Config.
 
 init_per_testcase(_Case, Config) ->
-    rec:start("dump_log"),
     Config.
 %%------------------------------------------------------------------------------
 %% Teardowns
@@ -72,38 +71,62 @@ all() ->
 %% Description   :
 %%------------------------------------------------------------------------------
 record() ->
-    [{require, recorder_test_message}].
+    [{require, recorder_test_message},
+     {require, recorder_test_file}].
 
 record(Config) ->
-    Message = ct:get_config(recorder_test_message),
+
+    % init stuff
+    Message = {self(), ct:get_config(recorder_test_message)},
+    File = ct:get_config(recorder_test_file),
+    file:delete(File),
+    rec:start(File),
 
     TestFun = fun() ->
 	    receive
 		{P, Any} ->
 		    ok
 		    %P ! Any
-	    end
+	    end,
+        receive
+            _ ->
+                ok
+        end
     end,
 
+    % Test tracing one process
     Pid1 = spawn(TestFun),
     rec:add_process(Pid1),
-
-    Pid1 ! {self(), Message},
+    Pid1 ! Message,
 
     timer:sleep(100),
+    {ok, Terms1} = file:consult(File),
+    [{trace, {delay, _}, {pid, Binary_Pid1}, {type, 'receive'},
+      {msg, Binary_Message1}}] = Terms1,
+    Pid1 = binary_to_term(Binary_Pid1),
+    Message = binary_to_term(Binary_Message1),
 
-    [{trace, _, {pid, Pid1}, {type, 'receive'}, {msg, Message}}] =
-	file:read_file("dump_log"),
-
+    % Test tracing another process
     Pid2 = spawn(TestFun),
     rec:add_process(Pid2),
-
-    Pid2 ! {self(), Message},
+    Pid2 ! Message,
 
     timer:sleep(100),
+    {ok, Terms2} = file:consult(File),
+    [_,{trace, {delay, _}, {pid, Binary_Pid2}, {type, 'receive'},
+        {msg, Binary_Message2}}] = Terms2,
+    Pid2 = binary_to_term(Binary_Pid2),
+    Message = binary_to_term(Binary_Message2),
 
-    [_|{trace, _, {pid, Pid2}, {type, 'receive'}, {msg, Message}}] =
-	file:consult("dump_log"),
+
+    Pid1 ! Message,
+
+    timer:sleep(100),
+    {ok, Terms3} = file:consult(File),
+    [_,_,{trace, {delay, _}, {pid, Binary_Pid3}, {type, 'receive'},
+        {msg, Binary_Message3}}] = Terms3,
+    Pid1 = binary_to_term(Binary_Pid3),
+    Message = binary_to_term(Binary_Message3),
 
     ok.
 

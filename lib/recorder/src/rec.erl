@@ -11,16 +11,26 @@ start(FileName) ->
                                           io_lib:format(
                                            "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
                                             ",{msg, ~p},{to, ~p}}.~n",
-                                            [TimeStamp,P, 'send', M, To]);
+                                            [TimeStamp,
+                                             term_to_binary(P),
+                                             'send',
+                                             term_to_binary(M),
+                                             term_to_binary(To)]);
                                        {trace, P, 'receive', M} ->
-                                           io_lib:format(
-                                            "{trace,{delay, ~p},{pid, ~p},{type,~p}," ++
-                                            "{msg, ~p}}.~n",
-                                             [TimeStamp,P, 'receiveX', M])
-                                   end,
-                        file:write_file(FileName, TraceStr, [append]),
+                                             io_lib:format(
+                                           "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
+                                            ",{msg, ~p}}.~n",
+                                            [TimeStamp,
+                                             term_to_binary(P),
+                                             'receive',
+                                             term_to_binary(M)])
+                                        end,
+                        ok = file:write_file(FileName, TraceStr, [append]),
                         Now
                 end, now()}).
 
 add_process(Pid) ->
     dbg:p(Pid, [m]).
+
+stop() ->
+    dbg:stop_clear().

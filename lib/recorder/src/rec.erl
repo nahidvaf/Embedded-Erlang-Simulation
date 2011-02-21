@@ -12,18 +12,18 @@ start(FileName) ->
                                            "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
                                             ",{msg, ~p},{to, ~p}}.~n",
                                             [TimeStamp,
-                                             term_to_binary(P),
+                                             get_reg_name(P),
                                              'send',
-                                             term_to_binary(M),
-                                             term_to_binary(To)]);
+                                             M,
+                                             get_reg_name(To)]);
                                        {trace, P, 'receive', M} ->
                                              io_lib:format(
                                            "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
                                             ",{msg, ~p}}.~n",
                                             [TimeStamp,
-                                             term_to_binary(P),
+                                             get_reg_name(P),
                                              'receive',
-                                             term_to_binary(M)])
+                                             M])
                                         end,
                         ok = file:write_file(FileName, TraceStr, [append]),
                         Now
@@ -34,3 +34,13 @@ add_process(Pid) ->
 
 stop() ->
     dbg:stop_clear().
+
+get_reg_name(Pid) ->
+    PInfo = process_info(Pid),
+    PName = proplists:get_value(registered_name, PInfo),
+    case PName of
+        undefined ->
+            exit(recording_pid_not_registered);
+        Name ->
+            Name
+    end.

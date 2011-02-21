@@ -74,59 +74,49 @@ record() ->
     [{require, recorder_test_message},
      {require, recorder_test_file}].
 
-record(Config) ->
+record(_Config) ->
 
     % init stuff
-    Message = {self(), ct:get_config(recorder_test_message)},
+    Message = ct:get_config(recorder_test_message),
+    register(test_pid, self()),
     File = ct:get_config(recorder_test_file),
     file:delete(File),
     rec:start(File),
 
     TestFun = fun() ->
-	    receive
-		{P, Any} ->
-		    ok
-		    %P ! Any
-	    end,
-        receive
-            _ ->
-                ok
-        end
+	    receive _ -> ok end,
+        receive _ -> ok end,
+        receive _ -> ok end
     end,
 
     % Test tracing one process
     Pid1 = spawn(TestFun),
+    register(test_fun1, Pid1),
     rec:add_process(Pid1),
     Pid1 ! Message,
 
     timer:sleep(100),
     {ok, Terms1} = file:consult(File),
-    [{trace, {delay, _}, {pid, Binary_Pid1}, {type, 'receive'},
-      {msg, Binary_Message1}}] = Terms1,
-    Pid1 = binary_to_term(Binary_Pid1),
-    Message = binary_to_term(Binary_Message1),
+    [{trace, {delay, _}, {pid, _RegProc1}, {type, 'receive'},
+      {msg, Message}}] = Terms1,
 
     % Test tracing another process
     Pid2 = spawn(TestFun),
+    register(test_fun2, Pid2),
     rec:add_process(Pid2),
     Pid2 ! Message,
 
     timer:sleep(100),
     {ok, Terms2} = file:consult(File),
-    [_,{trace, {delay, _}, {pid, Binary_Pid2}, {type, 'receive'},
-        {msg, Binary_Message2}}] = Terms2,
-    Pid2 = binary_to_term(Binary_Pid2),
-    Message = binary_to_term(Binary_Message2),
-
+    [_,{trace, {delay, _}, {pid, _RegProc2}, {type, 'receive'},
+        {msg, Message}}] = Terms2,
 
     Pid1 ! Message,
 
     timer:sleep(100),
     {ok, Terms3} = file:consult(File),
-    [_,_,{trace, {delay, _}, {pid, Binary_Pid3}, {type, 'receive'},
-        {msg, Binary_Message3}}] = Terms3,
-    Pid1 = binary_to_term(Binary_Pid3),
-    Message = binary_to_term(Binary_Message3),
+    [_,_,{trace, {delay, _}, {pid, _RegProc}, {type, 'receive'},
+        {msg, Message}}] = Terms3,
 
     ok.
 

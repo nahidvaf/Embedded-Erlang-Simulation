@@ -1,0 +1,3 @@
+{trace,{delay,800},{pid,port},{type, send},{msg, message_one},{to, test_pid}}.
+{trace,{delay,800},{pid,port},{type, send},{msg, message_two},{to, test_pid}}.
+{trace,{delay,800},{pid,port},{type, send},{msg, message_three},{to, test_pid}}.

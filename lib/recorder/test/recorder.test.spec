@@ -24,4 +24,4 @@
 {cover, "recorder.test.coverspec"}.
 
 %{suites, "test", [all]}.
-{cases, "test", 'recorder_SUITE', [record]}.
+{cases, "test", 'recorder_SUITE', [replay,record]}.

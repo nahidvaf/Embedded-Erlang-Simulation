@@ -55,8 +55,9 @@ start_link(Args) ->
 %% ------------------------------------------------------------------
 
 init(ListenerPid) ->
-    _ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"},
+    ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"},
                             [use_stdio, stream, binary]),
+    register(button_port, ButtonPort),
     loop(ListenerPid).
 
 loop(ListenerPid) ->

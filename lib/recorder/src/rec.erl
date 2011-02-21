@@ -35,7 +35,7 @@ add_process(Pid) ->
 stop() ->
     dbg:stop_clear().
 
-get_reg_name(Pid) ->
+get_reg_name(Pid) when (is_pid(Pid)) ->
     PInfo = process_info(Pid),
     PName = proplists:get_value(registered_name, PInfo),
     case PName of
@@ -43,4 +43,6 @@ get_reg_name(Pid) ->
             exit(recording_pid_not_registered);
         Name ->
             Name
-    end.
+    end;
+get_reg_name(Process) ->
+    Process.

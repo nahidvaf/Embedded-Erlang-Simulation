@@ -48,16 +48,17 @@
 %% @end
 %% ------------------------------------------------------------------------------
 start_link(Args) ->
-    {ok, spawn(?MODULE, init, [Args])}.
+    Pid = spawn(?MODULE, init, [Args]),
+    register(?MODULE, Pid),
+    {ok, Pid}.
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
 init(ListenerPid) ->
-    ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"},
+    _ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"},
                             [use_stdio, stream, binary]),
-    register(button_port, ButtonPort),
     loop(ListenerPid).
 
 loop(ListenerPid) ->

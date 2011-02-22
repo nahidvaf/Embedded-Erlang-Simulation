@@ -63,6 +63,14 @@ format_msg({trace, P, 'send', M, To}, TimeStamp) ->
                'send',
                M,
                get_reg_name(To)]);
+format_msg({trace, P, 'receive', {Port, M}}, TimeStamp) when (is_port(Port)) ->
+    io_lib:format(
+              "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
+              ",{msg, ~p}}.~n",
+              [TimeStamp,
+               get_reg_name(P),
+               'receive',
+               {port, M}]);
 format_msg({trace, P, 'receive', M}, TimeStamp) ->
     io_lib:format(
               "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
@@ -71,4 +79,3 @@ format_msg({trace, P, 'receive', M}, TimeStamp) ->
                get_reg_name(P),
                'receive',
                M]).
-

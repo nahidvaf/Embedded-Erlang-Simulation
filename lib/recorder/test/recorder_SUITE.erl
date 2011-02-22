@@ -84,8 +84,6 @@ replay(_Config) ->
     LogFile = ct:get_config(log_file),
     replayer:start(LogFile),
 
-
-
     receive message_one -> ok end,
     receive message_two -> ok end,
     receive message_three -> ok end,
@@ -102,7 +100,7 @@ record(_Config) ->
     Message = ct:get_config(recorder_test_message),
     File = ct:get_config(recorder_test_file),
     file:delete(File),
-    rec:start(File),
+    rec:start(File, [send, 'receive']),
 
     TestFun = fun() ->
 	    receive _ -> test_pid ! ok end,
@@ -147,12 +145,3 @@ record(_Config) ->
 %%------------------------------------------------------------------------------
 %% Internal Functions
 %%------------------------------------------------------------------------------
-receive_message(SerialStub, Message) ->
-    receive
-        {SerialStub, {data, Message}} ->
-            ok;
-        Other ->
-            {message_not_recognized, Other}
-    after 1000 ->
-            no_response_in_1000ms
-    end.

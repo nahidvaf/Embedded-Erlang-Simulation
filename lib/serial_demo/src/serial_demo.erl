@@ -29,7 +29,9 @@
 -include("../include/io.hrl").
 
 start() ->
-    _ListenerPid     = spawn_link(?MODULE, init, [self()]).
+    ListenerPid     = spawn_link(?MODULE, init, [self()]),
+    register(?MODULE, ListenerPid),
+    ListenerPid.
 
 init(MonitorPid) ->
     % Start ui monitor

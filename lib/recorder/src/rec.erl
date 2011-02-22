@@ -56,8 +56,8 @@ get_reg_name(Process) ->
 
 format_msg({trace, P, 'send', M, To}, TimeStamp) ->
     io_lib:format(
-              "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
-              ",{msg, ~p},{to, ~p}}.~n",
+              "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
+              ",{msg, ~w},{to, ~w}}.~n",
               [TimeStamp,
                get_reg_name(P),
                'send',
@@ -65,16 +65,16 @@ format_msg({trace, P, 'send', M, To}, TimeStamp) ->
                get_reg_name(To)]);
 format_msg({trace, P, 'receive', {Port, M}}, TimeStamp) when (is_port(Port)) ->
     io_lib:format(
-              "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
-              ",{msg, ~p}}.~n",
+              "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
+              ",{msg, ~w}}.~n",
               [TimeStamp,
                get_reg_name(P),
                'receive',
                {port, M}]);
 format_msg({trace, P, 'receive', M}, TimeStamp) ->
     io_lib:format(
-              "{trace,{delay, ~p},{pid, ~p},{type, ~p}" ++
-              ",{msg, ~p}}.~n",
+              "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
+              ",{msg, ~w}}.~n",
               [TimeStamp,
                get_reg_name(P),
                'receive',

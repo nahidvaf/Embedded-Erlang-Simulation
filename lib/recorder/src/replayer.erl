@@ -13,7 +13,9 @@ apply_message(_) ->
     ok.
 
 send_message(Delay, Process, Message)->
+    io:format("~n Sleeping for ~p msec ~n", [Delay div 1000]),
     timer:sleep(Delay div 1000),
+    io:format("~n Send msg ~p", [Message]),
     Process ! Message.
 
 

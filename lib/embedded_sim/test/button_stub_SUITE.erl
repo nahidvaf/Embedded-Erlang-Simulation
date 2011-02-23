@@ -47,8 +47,8 @@ init_per_suite(Config) ->
     Config.
 
 init_per_testcase(_Case, Config) ->
-    {ok, Stub} = beagle_button:start_link(self()),
-    [{Stub, Stub}|Config].
+    {ok, Stub} = button_stub:start_port("",""),
+    [{stub, Stub}|Config].
 
 %%------------------------------------------------------------------------------
 %% Teardowns
@@ -56,7 +56,7 @@ init_per_testcase(_Case, Config) ->
 end_per_suite(_Config) ->
     ok.
 
-end_per_testcase(_Case, Config) ->
+end_per_testcase(_Case, _Config) ->
     %Stub = proplists:get_value(stub, Config),
     %Stub ! stop,
     ok.
@@ -78,25 +78,17 @@ push() ->
 push(Config) ->
     Stub = proplists:get_value(stub, Config),
 
-    % Check button status after started
-    send_message(Stub, state),
-    ok = receive_message(Stub, released, 1000),
-
     % Pushes button and verifies it got pushed
     send_message(Stub, {push, 200}),
-    ok = receive_message(Stub, pushed, 1000),
-    ok = receive_message(Stub, released, 1000),
-    send_message(Stub, state),
-
-    % Check button status after released
-    ok = receive_message(Stub, released, 1000).
+    ok = receive_message(Stub, to_binary(pushed), 1000),
+    ok = receive_message(Stub, to_binary(released), 1000).
 
 %%------------------------------------------------------------------------------
 %% Internal Functions
 %%------------------------------------------------------------------------------
 receive_message(Stub, Message, TimeOut) ->
     receive
-        {Stub, Message} ->
+        {Stub, {data, Message}} ->
             ok;
         Other ->
             {message_not_recognized, Other}
@@ -107,3 +99,7 @@ receive_message(Stub, Message, TimeOut) ->
 send_message(Stub, Message) ->
     Stub ! {self(), {command, Message}}.
 
+to_binary(released) ->
+     <<0:64, 1:16/little, 276:16/little, 0:32/little, 0:1>>;
+to_binary(pushed) ->
+     <<0:64, 1:16/little, 276:16/little, 1:32/little, 0:1>>.

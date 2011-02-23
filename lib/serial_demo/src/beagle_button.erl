@@ -50,7 +50,6 @@
 %% ------------------------------------------------------------------------------
 start_link(Args) ->
     Pid = spawn_link(?MODULE, init, [Args]),
-    register(?MODULE, Pid),
     {ok, Pid}.
 
 %% ------------------------------------------------------------------
@@ -64,9 +63,9 @@ init(ListenerPid) ->
 
 loop(Port, ListenerPid) ->
     receive
-        {Port, {data,<<_:64, 1:16/little,276:16/little,1:32/little,_/bitstring>>}} ->
+        {_Port, {data,<<_:64, 1:16/little,276:16/little,1:32/little,_/bitstring>>}} ->
             ListenerPid ! {self(), pushed};
-        {Port, {data,<<_:64, 1:16/little,276:16/little,0:32/little,_/bitstring>>}} ->
+        {_Port, {data,<<_:64, 1:16/little,276:16/little,0:32/little,_/bitstring>>}} ->
             ListenerPid ! {self(), released}
     end,
     loop(Port, ListenerPid).

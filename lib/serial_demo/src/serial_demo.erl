@@ -36,11 +36,16 @@ start() ->
 init(MonitorPid) ->
     % Start ui monitor
     _StubMonitor     = stub_monitor:start_link(),
+
     % Start device servers
     SerialPid       = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
     register(serial, SerialPid),
+
     {ok, LedPid}    = led_stub:start_server(beagle_led, [self()]),
-    {ok, ButtonPid} = button_stub:start_server(beagle_button, [self()]),
+
+    {ok, ButtonPid} = beagle_button:start_link(self()),
+    register(beagle_button, ButtonPid),
+
     % Start demo loop
     process(SerialPid, LedPid, ButtonPid, MonitorPid).
 

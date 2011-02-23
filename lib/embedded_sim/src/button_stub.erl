@@ -29,7 +29,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_server/2]).
+-export([start_port/2]).
 
 %% ------------------------------------------------------------------
 %% gen_fsm State Exports
@@ -50,12 +50,11 @@
 %% ------------------------------------------------------------------
 
 %% ------------------------------------------------------------------------------
-%% @doc Starts a button stub or a gen server acting as a "driver" depending on OS
-%% env var EMBEDDED_SIM
+%% @doc Starts a button stub or a port depending on OS env var EMBEDDED_SIM
 %% @end
 %% ------------------------------------------------------------------------------
-start_server(ServerMod, Args) ->
-    stub:start_server(?MODULE, ServerMod, Args).
+start_port(PortName, PortSettings) ->
+    stub:start_port(?MODULE, PortName, PortSettings).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Definitions
@@ -89,16 +88,7 @@ handle_sync_event(_Event, _From, StateName, State) ->
 handle_info({_Pid, {command, {push, _Time}}}, pushed, State) ->
     pushed({command, {push, _Time}}, State);
 handle_info({_Pid, {command, {push, Time}}}, released, State) ->
-    released({command, {push, Time}}, State);
-handle_info({Pid, {command, state}}, StateName, State) ->
-            Pid ! {self(), StateName},
-            {next_state, StateName, State};
-handle_info({Pid, {command, is_pushed}}, pushed, State) ->
-    Pid ! {self(), true},
-    {next_state, on, State};
-handle_info({Pid, {command, is_pushed}}, released, State) ->
-    Pid ! {self(), false},
-    {next_state, on, State}.
+    released({command, {push, Time}}, State).
 
 terminate(_Reason, _StateName, _State) ->
   ok.
@@ -114,7 +104,7 @@ send_msg(Message, State) ->
     ParentPid = proplists:get_value(parent_pid, State),
     ParentPid ! {self(), {data, Message}},
 
-    % Send message to monitor
+    % Soend message to monitor
     MonitorServer = proplists:get_value(monitor_server, State),
     MessageString = format(Message),
     gen_server:cast(MonitorServer, {?MODULE, MessageString}).

@@ -36,7 +36,7 @@
 %% gen_server Function Exports
 %% ------------------------------------------------------------------
 
--export([init/1, loop/1]).
+-export([init/1, loop/2]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -45,10 +45,11 @@
 %% ------------------------------------------------------------------------------
 %% @doc Starts a server handling a port reading from and event device file,
 %% sending messages of when button is pushed and released
+%% This is not a gen_server, because beagle board dit not have otp libs
 %% @end
 %% ------------------------------------------------------------------------------
 start_link(Args) ->
-    Pid = spawn(?MODULE, init, [Args]),
+    Pid = spawn_link(?MODULE, init, [Args]),
     register(?MODULE, Pid),
     {ok, Pid}.
 
@@ -57,18 +58,18 @@ start_link(Args) ->
 %% ------------------------------------------------------------------
 
 init(ListenerPid) ->
-    _ButtonPort = open_port({spawn, "/bin/cat </dev/input/event0"},
+    {ok, Port} = button_stub:start_port({spawn, "/bin/cat </dev/input/event0"},
                             [use_stdio, stream, binary]),
-    loop(ListenerPid).
+    loop(Port, ListenerPid).
 
-loop(ListenerPid) ->
+loop(Port, ListenerPid) ->
     receive
-        {_, {data,<<_:64, 1:16/little,276:16/little,1:32/little,_/bitstring>>}} ->
+        {Port, {data,<<_:64, 1:16/little,276:16/little,1:32/little,_/bitstring>>}} ->
             ListenerPid ! {self(), pushed};
-        {_, {data,<<_:64, 1:16/little,276:16/little,0:32/little,_/bitstring>>}} ->
+        {Port, {data,<<_:64, 1:16/little,276:16/little,0:32/little,_/bitstring>>}} ->
             ListenerPid ! {self(), released}
     end,
-    loop(ListenerPid).
+    loop(Port, ListenerPid).
 
 
 %% ------------------------------------------------------------------

@@ -47,8 +47,8 @@ init_per_suite(Config) ->
     Config.
 
 init_per_testcase(_Case, Config) ->
-    {ok, Stub} = button_stub:start_server("",""),
-    [{stub, Stub}|Config].
+    {ok, Stub} = beagle_button:start_link(self()),
+    [{Stub, Stub}|Config].
 
 %%------------------------------------------------------------------------------
 %% Teardowns

@@ -67,11 +67,13 @@ init(Args) ->
 pushed({command, {push, _Time}}, State) ->
     {next_state, pushed, State};
 pushed(change_state, State) ->
-    send_msg(released, State),
+    Message = <<0:64, 1:16/little, 276:16/little, 0:32/little, 0:1>>,
+    send_msg(Message, State),
     {next_state, released, State}.
 
 released({command, {push, Time}}, State) ->
-    send_msg(pushed, State),
+    Message = <<0:64, 1:16/little, 276:16/little, 1:32/little, 0:1>>,
+    send_msg(Message, State),
     gen_fsm:send_event_after(Time, change_state),
     {next_state, pushed, State};
 released(change_state, State) ->
@@ -110,6 +112,14 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 
 send_msg(Message, State) ->
     ParentPid = proplists:get_value(parent_pid, State),
-    ParentPid ! {self(), Message},
+    ParentPid ! {self(), {data, Message}},
+
+    % Send message to monitor
     MonitorServer = proplists:get_value(monitor_server, State),
-    gen_server:cast(MonitorServer, {?MODULE, atom_to_list(Message)}).
+    MessageString = format(Message),
+    gen_server:cast(MonitorServer, {?MODULE, MessageString}).
+
+format(<<0:64, 1:16/little, 276:16/little, 0:32/little, 0:1>>) ->
+    "released";
+format(<<0:64, 1:16/little, 276:16/little, 1:32/little, 0:1>>) ->
+    "pushed".

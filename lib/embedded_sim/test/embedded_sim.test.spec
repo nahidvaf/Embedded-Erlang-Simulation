@@ -24,4 +24,4 @@
 {cover, "embedded_sim.test.coverspec"}.
 
 %{suites, "test", [all]}.
-{cases, "test", 'serial_stub_SUITE', [all]}.
+{cases, "test", [all], [all]}.

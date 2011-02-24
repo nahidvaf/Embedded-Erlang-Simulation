@@ -21,5 +21,6 @@
 
 -define(ON, "1").
 -define(OFF, "0").
+-define(KEEP_ALIVE, "2").
 -define(LED, "usr1").
 -define(GPIO, "7").

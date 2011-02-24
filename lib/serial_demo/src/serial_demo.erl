@@ -24,7 +24,7 @@
 -module(serial_demo).
 
 -compile(export_all).
--export([start/0, init/1]).
+-export([start/0, init/1, send_keep_alive/1]).
 
 -include("../include/io.hrl").
 
@@ -41,6 +41,9 @@ init(MonitorPid) ->
     SerialPid       = serial:start([{speed, 115200}, {open, "/dev/ttyS2"}]),
     register(serial, SerialPid),
 
+    % Start keep alive process for serial
+    spawn_link(?MODULE, send_keep_alive, [SerialPid]),
+
     {ok, LedPid}    = led_stub:start_server(beagle_led, [self()]),
 
     {ok, ButtonPid} = beagle_button:start_link(self()),
@@ -51,6 +54,8 @@ init(MonitorPid) ->
 
 process(SerialPid, LedPid, ButtonPid, MonitorPid) ->
     receive
+        {data, <<?KEEP_ALIVE>>} ->
+            keep_alive_received;
         {data, <<?OFF>>} ->
             MonitorPid ! data_off_recieved,
             light(LedPid, ?OFF);
@@ -65,6 +70,11 @@ process(SerialPid, LedPid, ButtonPid, MonitorPid) ->
             signal(SerialPid, <<?OFF>>)
     end,
     process(SerialPid, LedPid, ButtonPid, MonitorPid).
+
+send_keep_alive(SerialPid) ->
+    signal(SerialPid, <<?KEEP_ALIVE>>),
+    timer:sleep(2000),
+    send_keep_alive(SerialPid).
 
 %--------------------------------------------------------------------------------
 % Internal Functions

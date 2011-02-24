@@ -98,9 +98,10 @@ record(_Config) ->
 
     % init stuff
     Message = ct:get_config(recorder_test_message),
-    File = ct:get_config(recorder_test_file),
-    file:delete(File),
-    rec:start(File, [send, 'receive']),
+    Filename = ct:get_config(recorder_filename),
+    Filename2 = ct:get_config(recorder_filename2),
+    Config = [{rest, Filename}],
+    rec:start(Config, [send, 'receive']),
 
     TestFun = fun() ->
 	    receive _ -> test_pid ! ok end,
@@ -111,32 +112,34 @@ record(_Config) ->
     % Test tracing one process
     Pid1 = spawn(TestFun),
     register(test_fun1, Pid1),
-    rec:add_process(Pid1),
+    rec:add_process(Pid1, Filename),
+    timer:sleep(100),
     Pid1 ! Message,
 
     timer:sleep(100),
-    {ok, Terms1} = file:consult(File),
+    {ok, Terms1} = file:consult(Filename),
     [{trace, {delay, _}, {pid, _RegProc1}, {type, 'receive'},{msg, Message}},
      {trace, {delay, _}, {pid, _}, {type, 'send'}, {msg, ok}, {to, test_pid}}]
      = Terms1,
 
-    % Test tracing another process
+    % Test tracing another process using a different file
     Pid2 = spawn(TestFun),
     register(test_fun2, Pid2),
-    rec:add_process(Pid2),
+    rec:add_process(test_fun2, Filename2),
+    timer:sleep(100),
     Pid2 ! Message,
 
     timer:sleep(100),
-    {ok, Terms2} = file:consult(File),
-    [_, _,{trace, {delay, _}, {pid, _RegProc2}, {type, 'receive'},{msg, Message}},
+    {ok, Terms2} = file:consult(Filename2),
+    [{trace, {delay, _}, {pid, _RegProc2}, {type, 'receive'},{msg, Message}},
     {trace, {delay, _}, {pid, _}, {type, 'send'}, {msg, ok}, {to, test_pid}}]
      = Terms2,
 
     Pid1 ! Message,
 
     timer:sleep(100),
-    {ok, Terms3} = file:consult(File),
-    [_,_,_,_,{trace, {delay, _}, {pid, _RegProc}, {type, 'receive'},{msg, Message}},
+    {ok, Terms3} = file:consult(Filename),
+    [_,_,{trace, {delay, _}, {pid, _RegProc}, {type, 'receive'},{msg, Message}},
     {trace, {delay, _}, {pid, _}, {type, 'send'}, {msg, ok}, {to, test_pid}}]
      = Terms3,
 

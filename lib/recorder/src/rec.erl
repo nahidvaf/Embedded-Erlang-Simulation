@@ -30,7 +30,7 @@
 -type error() :: term().
 -type filename() :: string().
 
--spec (start/2 :: ([{all, filename()}|{pid(), filename()}|{rest, filename()}],
+-spec (start/2 :: ([{pid(), filename()}|{rest, filename()}],
                    [port]|[]) ->
               {ok, pid()} | {error, error()}).
 start(Config, Options) ->
@@ -43,7 +43,7 @@ start(Config, Options) ->
     dbg:tracer(process,{HandlerFun, now()}).
 
 init(Args) ->
-    Pid = spawn_link(?MODULE, config_server, Args),
+    Pid = spawn_link(?MODULE, config_server, [Args]),
     true = register(rec_config_server, Pid).
 
 config_server(Config) ->
@@ -52,7 +52,7 @@ config_server(Config) ->
                         Pid ! {config, Config},
                         Config;
                     {add, ConfigElement} ->
-                        [Config|ConfigElement]
+                        [ConfigElement | Config]
                 end,
     config_server(NewConfig).
 
@@ -65,9 +65,13 @@ get_config() ->
             exit(config_server_not_available)
     end.
 
-add_process(Pid, FileName) ->
-    rec_config_server ! {add, {FileName, Pid}},
-    dbg:p(Pid, [m]).
+add_process(Pid, FileName) when (is_pid(Pid)) ->
+    rec_config_server ! {add, {get_reg_name(Pid), FileName}},
+    dbg:p(Pid, [m]);
+
+add_process(Process, FileName) ->
+    rec_config_server ! {add, {Process, FileName}},
+    dbg:p(Process, [m]).
 
 stop() ->
     dbg:stop_clear().
@@ -86,9 +90,8 @@ record_msg(Msg, PrevTimeStamp, Now, Options) ->
             ok
     end.
 
-get_filename(_, [{all, FileName}]) ->
-    FileName;
 get_filename(Process, Config) ->
+
     Rest = proplists:get_value(rest, Config, "rec.log"),
     proplists:get_value(Process, Config, Rest).
 

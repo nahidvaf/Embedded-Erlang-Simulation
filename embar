@@ -5,25 +5,19 @@ CONFIG="embar.config"
 . $CONFIG
 
 case "$1" in
-    rconsole)
-
-        # Script vars
-        APP_DIR=${PWD##*/}
-        GZ="$APP_DIR.tar.gz"
-
-        # Ensure this script is running as the appropriate user
-        RUNNER_USER=
-        if [ ! -z "$RUNNER_USER" ] && [ `whoami` != "$RUNNER_USER" ]; then
-            exec sudo -u $RUNNER_USER -i $0 $@
-        fi
-
+    setup)
         # Get network interface
         INTERFACE=$(ifconfig | grep -E1 $EHA | grep -Eo 'en[0-9]*')
 
         # Set ip for gateway for beagbleboard
         # Need to do this as sudo
         echo "Set $INTERFACE to $GATEWAY_IP"
-        sudo ifconfig $INTERFACE $GATEWAY_IP
+        ifconfig $INTERFACE $GATEWAY_IP
+        ;;
+    rconsole)
+
+        # Script vars
+        GZ="$APP_DIR.tar.gz"
 
         # Remove log files etc. before compress?
 
@@ -47,7 +41,7 @@ case "$1" in
         ;;
     *)
         SCRIPT=$(basename $0)
-        echo "Usage: $SCRIPT {rconsole}"
+        echo "Usage: $SCRIPT {rconsole|setup}"
         ;;
 esac
 

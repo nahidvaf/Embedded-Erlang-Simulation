@@ -54,12 +54,11 @@ start(Config, Options) ->
     % TODO: store prevTimestamp and pid in accumulator,
     % record_msg should return pid, and if validation fails, prevTimestamp
     % for that pid should not be updatedg
-    HandlerFun = fun(Msg, PrevTimeStamp) ->
-                         Now = now(),
-                         record_msg(Msg, PrevTimeStamp, Now),
-                         Now
+    HandlerFun = fun(Msg, {FirstTimeStamp, PrevTimeStamps}) ->
+                         {FirstTimeStamp,
+                          record_msg(Msg,FirstTimeStamp, PrevTimeStamps)}
                  end,
-    dbg:tracer(process,{HandlerFun, now()}).
+    dbg:tracer(process,{HandlerFun, {now(), dict:new()}}).
 
 init(Args) ->
     Pid = spawn_link(?MODULE, config_server, [Args]),
@@ -102,20 +101,36 @@ stop() ->
 %
 % Internal Functions
 %
-record_msg(Msg, PrevTimeStamp, Now) ->
-    TimeStamp = timer:now_diff(Now, PrevTimeStamp),
+record_msg(Msg, FirstTimeStamp, PrevTimeStamps) ->
+    Now = now(),
     Config = get_config(),
     case validate_msg(Msg, Config) of
         true ->
             d_print("message was valid: ~w~n", [Msg]),
-            {Process, MsgStr} = process_msg(Msg, TimeStamp),
+            % Find prevTimestamp for FileName, create diff for logging, and
+            % store now() in TimeStamps dict
+            Process = get_reg_name(element(2, Msg)),
             FileName = get_filename(Process, Config),
+            PrevTimeStamp =
+                case dict:find(FileName, PrevTimeStamps) of
+                    error ->
+                        FirstTimeStamp;
+                    {ok, Value} ->
+                        Value
+                end,
+            Diff = timer:now_diff(Now, PrevTimeStamp),
+            NewTimeStamps = dict:store(FileName, Now, PrevTimeStamps),
+
+            % Format and write message to log file
+            MsgStr = format_msg(Msg, Process, Diff),
             d_print("Received ~w on process ~w after ~w uSec" ++
                     "writing to file ~s ~n",
-                    [MsgStr, Process, TimeStamp, FileName]),
-            ok = file:write_file(FileName, MsgStr, [append]);
+                    [MsgStr, Process, Diff, FileName]),
+            ok = file:write_file(FileName, MsgStr, [append]),
+            NewTimeStamps;
         _Else ->
-            ok
+            d_print("message was invalid: ~w~n", [Msg]),
+            PrevTimeStamps
     end.
 
 % Extract options for a process from config, third element is options
@@ -172,34 +187,32 @@ get_reg_name(Pid) when (is_pid(Pid)) ->
 get_reg_name(Process) ->
     Process.
 
-process_msg({trace, P, 'send', M, To}, TimeStamp) ->
-    Process = get_reg_name(P),
-    {Process, io_lib:format(
-          "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
-          ",{msg, ~w},{to, ~w}}.~n",
-          [TimeStamp,
-           Process,
-           'send',
-           M,
-           get_reg_name(To)])};
-process_msg({trace, P, 'receive', {Port, M}}, TimeStamp) when (is_port(Port)) ->
-    Process = get_reg_name(P),
-    {Process, io_lib:format(
-          "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
-          ",{msg, ~w}}.~n",
-          [TimeStamp,
-           Process,
-           'receive',
-           {port, M}])};
-process_msg({trace, P, 'receive', M}, TimeStamp) ->
-    Process = get_reg_name(P),
-    {Process, io_lib:format(
-          "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
-          ",{msg, ~w}}.~n",
-          [TimeStamp,
-           Process,
-           'receive',
-           M])}.
+format_msg({trace, _Pid, 'send', M, To}, Process, NewTimeStamp) ->
+    io_lib:format(
+      "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
+      ",{msg, ~w},{to, ~w}}.~n",
+      [NewTimeStamp,
+       Process,
+       'send',
+       M,
+       get_reg_name(To)]);
+format_msg({trace, _Pid, 'receive', {Port, M}}, Process, NewTimeStamp)
+  when is_port(Port) ->
+    io_lib:format(
+      "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
+      ",{msg, ~w}}.~n",
+      [NewTimeStamp,
+       Process,
+       'receive',
+       {port, M}]);
+format_msg({trace, _Pid, 'receive', M}, Process, NewTimeStamp) ->
+    io_lib:format(
+      "{trace,{delay, ~w},{pid, ~w},{type, ~w}" ++
+      ",{msg, ~w}}.~n",
+      [NewTimeStamp,
+       Process,
+       'receive',
+       M]).
 
 %
 % Replayer

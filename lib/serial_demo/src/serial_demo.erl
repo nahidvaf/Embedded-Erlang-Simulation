@@ -24,16 +24,16 @@
 -module(serial_demo).
 
 -compile(export_all).
--export([start/0, init/1, send_keep_alive/1]).
+-export([start/0, init/0, send_keep_alive/1]).
 
 -include("../include/io.hrl").
 
 start() ->
-    ListenerPid     = spawn_link(?MODULE, init, [self()]),
+    ListenerPid     = spawn_link(?MODULE, init, []),
     register(?MODULE, ListenerPid),
     ListenerPid.
 
-init(MonitorPid) ->
+init() ->
     % Start ui monitor
     _StubMonitor     = stub_monitor:start_link(),
 
@@ -50,26 +50,22 @@ init(MonitorPid) ->
     register(beagle_button, ButtonPid),
 
     % Start demo loop
-    process(SerialPid, LedPid, ButtonPid, MonitorPid).
+    process(SerialPid, LedPid, ButtonPid).
 
-process(SerialPid, LedPid, ButtonPid, MonitorPid) ->
+process(SerialPid, LedPid, ButtonPid) ->
     receive
         {data, <<?KEEP_ALIVE>>} ->
             keep_alive_received;
         {data, <<?OFF>>} ->
-            MonitorPid ! data_off_recieved,
             light(LedPid, ?OFF);
         {data, <<?ON>>} ->
-            MonitorPid ! data_on_recieved,
             light(LedPid, ?ON);
         {ButtonPid, pushed} ->
-            MonitorPid ! user_pushed_recieved,
             signal(SerialPid, <<?ON>>);
         {ButtonPid, released} ->
-            MonitorPid ! user_released_recieved,
             signal(SerialPid, <<?OFF>>)
     end,
-    process(SerialPid, LedPid, ButtonPid, MonitorPid).
+    process(SerialPid, LedPid, ButtonPid).
 
 send_keep_alive(SerialPid) ->
     signal(SerialPid, <<?KEEP_ALIVE>>),

@@ -1,0 +1,84 @@
+#!/bin/bash
+## ------------------------------------------------------------------------------
+## Copyright 2011 Rickard Olsson, Reza Javaheri
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+## http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+## ------------------------------------------------------------------------------
+
+## ------------------------------------------------------------------------------
+## @author Rickard Olsson <rickard@ooodev.com>
+## @author Reza Javaheri <reza@ooodev.com>
+## @doc Ember is a build/deploy tool for EMBedded ERlang
+## ------------------------------------------------------------------------------
+
+# Read config file
+CONFIG="ember.config"
+. $CONFIG
+
+# Script vars
+APP_GZ="$APP_DIR.tar.gz"
+
+# Set script name
+SCRIPT=`basename $0`
+
+case "$1" in
+    setup)
+        # Doesn't work if EHA changes, which seems to do for OTG
+        # Set ip for gateway for beagbleboard
+        # Need to do this as sudo
+        echo "Set $INTERFACE to $GATEWAY_IP"
+        ifconfig $INTERFACE $GATEWAY_IP
+        ;;
+    deploy)
+        # TODO: Remove log files etc. before compress?
+
+        # Go outside app dir, tar application dir, go back
+        # This is so we don't get path contains .. on untaring
+        echo "Tar $APP_DIR"
+        cd ../
+        tar zcf "$APP_DIR/$APP_GZ" $APP_DIR
+        cd $APP_DIR
+
+        # Send compressed app over scp
+        echo "Upload to $SSH_USER@$SSH_IP:$APP_GZ"
+        scp $APP_GZ "$SSH_USER@$SSH_IP:$APP_GZ"
+        ;;
+    rconsole)
+        # Run deploy
+        ./$SCRIPT deploy
+
+        # Start ssh, untar file, cd to app dir, boot
+        echo "Login to $SSH_USER@$SSH_IP"
+        echo "Untar $APP_GZ"
+        echo "Boot $APP_DIR with $BOOT_CMD"
+        SSH_CMD="tar zxf $APP_GZ && cd $APP_DIR && $BOOT_CMD"
+        ssh -t "$SSH_USER@$SSH_IP" $SSH_CMD
+        ;;
+    getlogs)
+        # Get logs from beagbleboard
+        GZ="$LOG_DIR.tar.gz"
+        SSH_CMD="cd $APP_DIR && tar zcf $GZ $LOG_DIR"
+        ssh -t "$SSH_USER@$SSH_IP" $SSH_CMD
+        scp    "$SSH_USER@$SSH_IP:$APP_DIR/$GZ" $GZ
+        tar zxf "$GZ"
+        ;;
+    ssh)
+        ssh -t "$SSH_USER@$SSH_IP"
+        ;;
+
+    *)
+        echo "Usage: $SCRIPT {setup|deploy|rconsole|getlogs|ssh}"
+        ;;
+esac
+
+exit 0

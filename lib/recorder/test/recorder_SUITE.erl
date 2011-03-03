@@ -82,7 +82,7 @@ replay() ->
 replay(_Config) ->
     % init
     LogFile = ct:get_config(log_file),
-    replayer:start(LogFile),
+    rec:replay(LogFile),
 
     receive message_one -> ok end,
     receive message_two -> ok end,
@@ -100,8 +100,8 @@ record(_Config) ->
     Message = ct:get_config(recorder_test_message),
     Filename = ct:get_config(recorder_filename),
     Filename2 = ct:get_config(recorder_filename2),
-    Config = [{rest, Filename}],
-    rec:start(Config, [send, 'receive']),
+    Config = [],
+    rec:start(Config, [v]),
 
     TestFun = fun() ->
 	    receive _ -> test_pid ! ok end,
@@ -112,7 +112,7 @@ record(_Config) ->
     % Test tracing one process
     Pid1 = spawn(TestFun),
     register(test_fun1, Pid1),
-    rec:add_process(Pid1, Filename),
+    rec:add_process(Pid1, Filename, [send, 'receive']),
     timer:sleep(100),
     Pid1 ! Message,
 
@@ -125,7 +125,7 @@ record(_Config) ->
     % Test tracing another process using a different file
     Pid2 = spawn(TestFun),
     register(test_fun2, Pid2),
-    rec:add_process(test_fun2, Filename2),
+    rec:add_process(test_fun2, Filename2, [send, 'receive']),
     timer:sleep(100),
     Pid2 ! Message,
 

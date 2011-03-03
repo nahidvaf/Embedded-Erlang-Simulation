@@ -23,21 +23,40 @@
 
 -module(rec).
 
--export([start/2, add_process/2, stop/0]).
+-export([start/0, start/1, start/2, add_process/3, stop/0, replay/1, replay/2]).
 
 -export([config_server/1]).
 
 -type error() :: term().
 -type filename() :: string().
+-type msg_option() :: port | 'receive' | send.
 
--spec (start/2 :: ([{pid(), filename()}|{rest, filename()}],
-                   [port]|[]) ->
+% Recorder
+% TODO: add processes in config at start
+-spec (start/0 :: () -> {ok, pid()} | {error, error()}).
+start() ->
+    start([]).
+
+-spec (start/1 :: ([{pid(), filename(), [msg_option()]}|
+                    {rest, filename(), [msg_option()]}]) ->
+              {ok, pid()} | {error, error()}).
+start(Config) ->
+   start(Config, []).
+
+-spec (start/2 :: ([{pid(), filename(), [msg_option()]}],
+                    [v]) ->
               {ok, pid()} | {error, error()}).
 start(Config, Options) ->
+    % init options
+    set_env(verbose, v, Options),
+
     init(Config),
+    % TODO: store prevTimestamp and pid in accumulator,
+    % record_msg should return pid, and if validation fails, prevTimestamp
+    % for that pid should not be updatedg
     HandlerFun = fun(Msg, PrevTimeStamp) ->
                          Now = now(),
-                         record_msg(Msg, PrevTimeStamp, Now, Options),
+                         record_msg(Msg, PrevTimeStamp, Now),
                          Now
                  end,
     dbg:tracer(process,{HandlerFun, now()}).
@@ -65,12 +84,16 @@ get_config() ->
             exit(config_server_not_available)
     end.
 
-add_process(Pid, FileName) when (is_pid(Pid)) ->
-    rec_config_server ! {add, {get_reg_name(Pid), FileName}},
-    dbg:p(Pid, [m]);
-
-add_process(Process, FileName) ->
-    rec_config_server ! {add, {Process, FileName}},
+% Add process with dbg:p even if it is already added
+add_process(Pid, FileName, MsgOptions) when is_pid(Pid) ->
+    add_process(get_reg_name(Pid), FileName, MsgOptions);
+add_process(Process, FileName, MsgOptions) ->
+    case lists:keymember(Process, 1, get_config()) of
+        true ->
+            ok;
+        false ->
+            rec_config_server ! {add, {Process, FileName, MsgOptions}}
+    end,
     dbg:p(Process, [m]).
 
 stop() ->
@@ -79,27 +102,54 @@ stop() ->
 %
 % Internal Functions
 %
-record_msg(Msg, PrevTimeStamp, Now, Options) ->
+record_msg(Msg, PrevTimeStamp, Now) ->
     TimeStamp = timer:now_diff(Now, PrevTimeStamp),
-    case validate_msg(Msg, Options) of
+    Config = get_config(),
+    case validate_msg(Msg, Config) of
         true ->
+            d_print("message was valid: ~w~n", [Msg]),
             {Process, MsgStr} = process_msg(Msg, TimeStamp),
-            FileName = get_filename(Process, get_config()),
+            FileName = get_filename(Process, Config),
+            d_print("Received ~w on process ~w after ~w uSec" ++
+                    "writing to file ~s ~n",
+                    [MsgStr, Process, TimeStamp, FileName]),
             ok = file:write_file(FileName, MsgStr, [append]);
         _Else ->
             ok
     end.
 
+% Extract options for a process from config, third element is options
+extract_options({trace, Pid, Type, Msg, _To}, Config) when is_pid(Pid) ->
+    extract_options({trace, Pid, Type, Msg}, Config);
+extract_options({trace, Pid, _Type, _Msg}, Config)  when is_pid(Pid) ->
+    case lists:keyfind(get_reg_name(Pid), 1, Config) of
+        {_Process, _Filename, MsgOptions} ->
+            MsgOptions;
+        false ->
+            exit(process_not_in_config);
+        _Other ->
+            exit(config_server_corrupted)
+    end.
+
 get_filename(Process, Config) ->
+    case lists:keyfind(Process, 1, Config) of
+        {_Process, FileName, _MsgOptions} ->
+            FileName;
+        false ->
+            exit(process_not_in_config);
+        _Other ->
+            exit(config_server_corrupted)
+    end.
 
-    Rest = proplists:get_value(rest, Config, "rec.log"),
-    proplists:get_value(Process, Config, Rest).
-
-
-validate_msg(Msg, Options) ->
-    ZippedOptions =
-        lists:zip(lists:duplicate(length(Options), Msg), Options),
-    lists:any(fun validate/1, ZippedOptions).
+validate_msg(Msg, Config) ->
+    case extract_options(Msg, Config) of
+        false ->
+            false;
+        Options ->
+            ZippedOptions =
+                lists:zip(lists:duplicate(length(Options), Msg), Options),
+            lists:any(fun validate/1, ZippedOptions)
+    end.
 
 validate({{trace, _Pid, 'receive', _Msg}, 'receive'}) ->
     true;
@@ -150,3 +200,46 @@ process_msg({trace, P, 'receive', M}, TimeStamp) ->
            Process,
            'receive',
            M])}.
+
+%
+% Replayer
+%
+replay(LogFile) ->
+    replay(LogFile, []).
+
+replay(LogFile, Options) ->
+    {ok, MessageList} = file:consult(LogFile),
+    set_env(verbose, v, Options),
+    lists:foreach(fun apply_message/1, MessageList).
+
+%
+% Internal functions
+%
+apply_message({trace, {delay, Delay}, {pid, Process}, {type, 'receive'},
+               {msg, Message}}) ->
+    send_message(Delay, Process, Message);
+apply_message(_) ->
+    ok.
+
+send_message(Delay, Process, Message)->
+    d_print("~n Sleeping for ~p msec ~n", [Delay div 1000]),
+    timer:sleep(Delay div 1000),
+    d_print("~n Send msg ~p", [Message]),
+    Process ! Message.
+
+d_print(Message, Args) ->
+    case application:get_env(recorder, verbose) of
+        {ok, true} ->
+            io:format(Message, Args);
+        _ ->
+            ok
+    end.
+
+% Internal functions for recorder and replayer
+set_env(Env, Alias, Options) ->
+    case lists:member(Alias, Options) of
+        true ->
+            application:set_env(recorder, Env, true);
+        _ ->
+           ok
+    end.

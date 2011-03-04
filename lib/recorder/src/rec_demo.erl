@@ -18,15 +18,15 @@ record(DriverOutput, AppOutput) ->
 
 replay() ->
     % For replaying on beagleboard
-    RecDir = "../../rec_logs",
-    % For replaging on simualtor
-    %RecDir = "../../../rec_logs",
+    %RecDir = "../../rec_logs",
+    % For replaying on simualtor
+    RecDir = "../../../rec_logs",
     replay(RecDir).
 
 replay(RecDir) ->
     Num = get_counter(RecDir),
     DriverOutput = io_lib:format("~s/~s_~B.log", [RecDir, "beagle_driver", Num]),
-    AppOutput = io_lib:format("~s/~s_~B.log", [RecDir, "sim_app", Num]),
+    AppOutput = io_lib:format("~s/~s_~B.log", [RecDir, "beagle_replay_app", Num]),
     replay(DriverOutput, AppOutput).
 
 
@@ -34,6 +34,7 @@ replay(DriverOutput, AppOutput) ->
     serial_demo:start(),
     timer:sleep(100),
     rec:start(),
+    io:format("DriverOutput: ~p AppOutput: ~p ~n", [DriverOutput, AppOutput]),
     rec:add_process(serial_demo, AppOutput, [send]),
     rec:replay(DriverOutput).
 
@@ -44,7 +45,7 @@ get_counter(RecDir) ->
         {ok, []} ->
             1;
         {ok, [PrevNum]} when is_integer(PrevNum) ->
-            PrevNum + 1;
+            PrevNum;
         _ ->
             1
     end.
@@ -52,7 +53,7 @@ get_counter(RecDir) ->
 inc_counter(RecDir) ->
     CounterFile = RecDir ++ "/rec_counter",
     filelib:ensure_dir(RecDir),
-    NewNum = get_counter(RecDir),
+    NewNum = get_counter(RecDir) + 1,
     file:write_file(CounterFile, io_lib:format("~w.", [NewNum])),
     NewNum.
 

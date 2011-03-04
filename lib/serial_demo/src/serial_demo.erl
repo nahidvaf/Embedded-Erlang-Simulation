@@ -48,6 +48,8 @@ init() ->
 
     {ok, ButtonPid} = beagle_button:start_link(self()),
     register(beagle_button, ButtonPid),
+    % Crashes if we try to register this on simualtor
+%    register(beagle_led, LedPid),
 
     % Start demo loop
     process(SerialPid, LedPid, ButtonPid).
